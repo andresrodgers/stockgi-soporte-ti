@@ -38,6 +38,8 @@ export default function UsuariosPage() {
       position: String(form.get("position") || ""),
       location: String(form.get("location") || ""),
       status: String(form.get("status")) as "Activo" | "Inactivo",
+      temporaryPassword: String(form.get("temporaryPassword") || ""),
+      mustChangePassword: !editingUser,
     };
 
     if (editingUser) {
@@ -128,7 +130,7 @@ export default function UsuariosPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Contrasena temporal">
-                  <input className={inputClass} type="password" placeholder={editingUser ? "Dejar en blanco si no cambia" : "Clave inicial"} required={!editingUser} />
+                  <input name="temporaryPassword" className={inputClass} type="password" placeholder={editingUser ? "Dejar en blanco si no cambia" : "Clave inicial"} required={!editingUser} />
                 </Field>
                 <Field label="Estado">
                   <select name="status" className={selectClass} defaultValue={editingUser?.status ?? "Activo"} required>
@@ -172,4 +174,6 @@ export default function UsuariosPage() {
     </AppShell>
   );
 }
+
+
 

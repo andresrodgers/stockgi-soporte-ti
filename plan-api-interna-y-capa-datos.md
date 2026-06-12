@@ -1,4 +1,4 @@
-﻿# Plan API interna y capa de datos - StockGI Soporte TI
+# Plan API interna y capa de datos - StockGI Soporte TI
 
 ## Objetivo
 
@@ -34,7 +34,7 @@ Se agrego una capa formal de repositorios:
 src/server/repositories/types.ts
 src/server/repositories/demo-repository.ts
 src/server/repositories/supabase-repository.ts
-src/server/repositories/postgres-repository.ts (pendiente)
+src/server/repositories/postgres-repository.ts
 src/server/repositories/index.ts
 ```
 
@@ -49,10 +49,10 @@ Valores esperados:
 | Valor | Estado | Uso |
 | --- | --- | --- |
 | `demo` | Activo | Usa datos demo en memoria del proceso Next.js |
-| `postgres` | Pendiente produccion | Usara PostgreSQL local en la VM Ubuntu |
+| `postgres` | Implementado, pendiente prueba en VM | Usa PostgreSQL local con sesiones opacas, usuarios, contratos, tickets, comentarios y adjuntos |
 | `supabase` | Alternativa futura | Usaria Supabase si se decide volver a cloud administrado |
 
-El repositorio Supabase existe como stub historico. El siguiente repositorio a implementar para produccion sera `postgres-repository`, conectado a PostgreSQL local en la VM.
+El repositorio Supabase existe como stub historico. El repositorio PostgreSQL local ya esta implementado y se activa con `DATA_SOURCE="postgres"`, pendiente de prueba contra la VM.
 ## Capa server-side creada
 
 Carpetas principales:
@@ -151,7 +151,7 @@ Reglas actuales:
 
 ## Sesion
 
-La sesion actual usa cookie firmada:
+La sesion usa dos modos segun `DATA_SOURCE`:
 
 ```text
 stockgi_session
@@ -164,17 +164,7 @@ Propiedades:
 - `secure` solo en produccion
 - duracion: 8 horas
 
-Payload firmado:
-
-```json
-{
-  "userId": "user-1",
-  "role": "usuario",
-  "contractId": "operacion-norte"
-}
-```
-
-Nota: esta sesion es suficiente para demo tecnica. Cuando se conecte Supabase, el backend debe validar usuario real contra `app_users` y contrasena con hash.
+Modo demo: payload firmado compatible con la demo. Modo PostgreSQL: token opaco, hash del token en `app_sessions`, revocacion en logout, expiracion y eventos en `session_events`.
 
 ## Proteccion de rutas visuales
 
@@ -228,7 +218,7 @@ Fase actual:
 
 Fase PostgreSQL local / produccion:
 
-- Guardar archivos en storage privado local o MinIO.
+- Guardar archivos en storage privado local.
 - Guardar metadata en `ticket_attachments`.
 - Comprimir imagenes antes de subir cuando sea posible.
 - Programar eliminacion fisica despues de `closed_at + 30 dias`.
@@ -250,10 +240,8 @@ Cuando la VM este lista con PostgreSQL local:
 - Probar acceso SSH a la VM por Tailscale.
 - Instalar Docker y PostgreSQL local en la VM.
 - Conectar login real con hash de contrasena.
-- Subir adjuntos reales a storage privado local o MinIO.
-- Crear `src/server/repositories/postgres-repository.ts` con consultas reales.
+- Subir adjuntos reales a storage privado local.
 - Cambiar `DATA_SOURCE` de `demo` a `postgres` cuando la VM este lista.
-- Reemplazar repositorio demo por repositorio PostgreSQL.
 ## Comandos de verificacion
 
 ```powershell
@@ -283,11 +271,39 @@ Implementado en modo `DATA_SOURCE="demo"`:
 
 Pendientes para PostgreSQL local en VM:
 
-- Subir archivos reales a storage privado local o MinIO.
+- Subir archivos reales a storage privado local.
 - Guardar metadata real de adjuntos en tabla `ticket_attachments`.
 - Ejecutar tarea de eliminacion fisica despues de 30 dias desde cierre.
-- Crear `src/server/repositories/postgres-repository.ts` con consultas reales.
 - Cambiar `DATA_SOURCE="demo"` a `DATA_SOURCE="postgres"` cuando la VM este activa.
 - Probar carga masiva contra tabla real `app_users`.
-- Reemplazar contrasena demo por hash real.
+- Probar login real con BCrypt cost 12 contra PostgreSQL local.
 
+
+## Estado real implementado - PostgreSQL local
+
+Implementado en codigo:
+
+- `DATA_SOURCE="postgres"` como selector de repositorio real.
+- Cliente PostgreSQL lazy en `src/server/db` para no romper `next build` sin `DATABASE_URL`.
+- Migracion inicial en `database/migrations/0001_initial_postgres.sql`.
+- Seed minimo en `database/seeds/0001_seed_minimal.sql`.
+- Usuarios DB separados por intencion: migrator para DDL y app para DML.
+- Login real con BCrypt cost 12.
+- Bloqueo de usuario: 5 intentos fallidos bloquean 15 minutos.
+- Sesion opaca en `app_sessions` con cookie `stockgi_session` httpOnly.
+- Cambio obligatorio de contrasena en `/cambiar-contrasena`.
+- Storage privado local para adjuntos con metadata en PostgreSQL.
+- Endpoint de descarga autenticado de adjuntos.
+- Scripts `db:migrate`, `db:seed` y `attachments:cleanup`.
+- Dockerfile y `docker-compose.yml` aislados con `COMPOSE_PROJECT_NAME=stockgi_soporte_ti`.
+
+Pendiente de infraestructura:
+
+- Crear `.env.production` real en la VM, sin subirlo a Git.
+- Levantar PostgreSQL local con Docker en la VM.
+- Ejecutar migraciones y seed contra la base real.
+- Probar backup y restore.
+- Configurar Cloudflare Tunnel para `soporte.stockgi.com`.
+- Hacer prueba funcional completa con `DATA_SOURCE="postgres"`.
+
+Nota tecnica: `next build` pasa correctamente. Turbopack puede mostrar una advertencia por el endpoint que lee archivos privados del disco para descarga autenticada; no bloquea el build.

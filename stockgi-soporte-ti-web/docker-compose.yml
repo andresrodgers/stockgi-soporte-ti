@@ -1,0 +1,76 @@
+services:
+  app:
+    container_name: stockgi_soporte_ti_app
+    build:
+      context: .
+    env_file:
+      - .env.production
+    environment:
+      DATA_SOURCE: postgres
+      DATABASE_URL: postgresql://stockgi_app:${POSTGRES_APP_PASSWORD}@postgres:5432/stockgi_soporte_ti
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - stockgi_soporte_ti_storage_data:/var/lib/stockgi/uploads
+    networks:
+      - stockgi_soporte_ti_internal
+    restart: unless-stopped
+
+  postgres:
+    container_name: stockgi_soporte_ti_postgres
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: stockgi_soporte_ti
+      POSTGRES_USER: stockgi_migrator
+      POSTGRES_PASSWORD: ${POSTGRES_MIGRATOR_PASSWORD}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD}
+    volumes:
+      - stockgi_soporte_ti_postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - stockgi_soporte_ti_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stockgi_migrator -d stockgi_soporte_ti"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  cloudflared:
+    container_name: stockgi_soporte_ti_cloudflared
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - app
+    networks:
+      - stockgi_soporte_ti_internal
+    restart: unless-stopped
+    profiles:
+      - tunnel
+
+  backup:
+    container_name: stockgi_soporte_ti_backup
+    image: postgres:16-alpine
+    env_file:
+      - .env.production
+    volumes:
+      - stockgi_soporte_ti_backups:/backups
+      - ./scripts:/scripts:ro
+    networks:
+      - stockgi_soporte_ti_internal
+    entrypoint: ["/bin/sh", "-c", "while true; do /scripts/backup-postgres.sh; sleep 86400; done"]
+    profiles:
+      - backup
+
+networks:
+  stockgi_soporte_ti_internal:
+    name: stockgi_soporte_ti_net
+
+volumes:
+  stockgi_soporte_ti_postgres_data:
+    name: stockgi_soporte_ti_postgres_data
+  stockgi_soporte_ti_storage_data:
+    name: stockgi_soporte_ti_storage_data
+  stockgi_soporte_ti_backups:
+    name: stockgi_soporte_ti_backups

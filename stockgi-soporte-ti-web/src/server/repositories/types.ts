@@ -1,11 +1,11 @@
-﻿import type { Contract, Ticket, TicketCategory, User } from "@/lib/types";
+﻿import type { Contract, CreateUserInput, Ticket, TicketCategory, User } from "@/lib/types";
 
 export type CreateTicketRecord = Ticket;
-export type CreateUserRecord = Omit<User, "id">;
+export type CreateUserRecord = CreateUserInput;
 export type CreateContractRecord = Omit<Contract, "id">;
 
 export interface DataRepository {
-  readonly source: "demo" | "supabase";
+  readonly source: "demo" | "supabase" | "postgres";
   listContracts(): Contract[] | Promise<Contract[]>;
   createContract(input: CreateContractRecord): Contract | Promise<Contract>;
   updateContract(contractId: string, updates: Partial<Contract>): Contract | Promise<Contract>;
@@ -17,3 +17,4 @@ export interface DataRepository {
   createTicket(ticket: CreateTicketRecord): Ticket | Promise<Ticket>;
   updateTicket(ticketId: string, updates: Partial<Ticket>): Ticket | Promise<Ticket>;
 }
+

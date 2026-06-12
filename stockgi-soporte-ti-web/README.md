@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StockGI Soporte TI Web
 
-## Getting Started
+App web privada para gestion de tickets de soporte TI de StockGI.
 
-First, run the development server:
+## Desarrollo local
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```powershell
+npm install
+npm run dev -- --hostname 127.0.0.1 --port 3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Modo local por defecto:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+DATA_SOURCE="demo"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Validacion
 
-## Learn More
+```powershell
+npm run lint
+npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Produccion objetivo
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+La produccion objetivo usa:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Next.js en Node runtime.
+- PostgreSQL local en la VM Ubuntu.
+- Storage privado local para adjuntos.
+- Sesiones opacas con cookie `stockgi_session`.
+- Docker Compose aislado con `COMPOSE_PROJECT_NAME=stockgi_soporte_ti`.
+- Cloudflare Tunnel para `soporte.stockgi.com`.
 
-## Deploy on Vercel
+## Variables
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Copiar `.env.production.example` a `.env.production` en la VM y completar valores reales. No subir `.env.production` a Git.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Base de datos
+
+```bash
+npm run db:migrate
+npm run db:seed
+```
+
+El seed crea un contrato base y un admin temporal. La contrasena temporal debe cambiarse en el primer login.
+
+## Docker
+
+```bash
+COMPOSE_PROJECT_NAME=stockgi_soporte_ti docker compose --env-file .env.production up -d --build
+```
+
+PostgreSQL no debe exponerse a internet. Cloudflare Tunnel publica solo la app.

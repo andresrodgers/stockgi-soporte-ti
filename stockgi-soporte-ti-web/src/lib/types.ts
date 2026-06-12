@@ -31,6 +31,7 @@ export type User = {
   position?: string;
   location?: string;
   status: "Activo" | "Inactivo";
+  mustChangePassword?: boolean;
 };
 
 export type TicketRequestType = {
@@ -68,6 +69,7 @@ export type TicketAttachment = {
   retentionDays: number;
   deleteAfterAt?: string;
   deletedAt?: string;
+  storagePath?: string;
 };
 
 export type Ticket = {
@@ -107,3 +109,11 @@ export type BulkImportResult = {
   createdUsers: number;
   rows: BulkImportRowResult[];
 };
+
+export type CreateUserInput = Omit<User, "id"> & {
+  temporaryPassword?: string;
+  mustChangePassword?: boolean;
+};
+
+
+

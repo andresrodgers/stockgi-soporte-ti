@@ -1,5 +1,6 @@
 ﻿import type { TicketAttachment } from "@/lib/types";
 import { validateAttachment } from "@/server/attachments";
+import { saveUploadedFile } from "@/server/attachments/storage";
 import { fail, ok } from "@/server/http";
 import { getSession } from "@/server/session";
 import { addTicketAttachments } from "@/server/tickets";
@@ -11,16 +12,24 @@ export async function POST(request: Request, context: RouteContext) {
     const session = await getSession();
     if (!session) return fail("No autenticado", 401);
     const { id } = await context.params;
-    const body = await request.json();
-    const attachments = Array.isArray(body.attachments) ? body.attachments as TicketAttachment[] : [];
+    const contentType = request.headers.get("content-type") || "";
+    let attachments: TicketAttachment[] = [];
 
-    if (!attachments.length) return fail("No se recibieron adjuntos");
-
-    for (const attachment of attachments) {
-      validateAttachment({ name: attachment.name, type: attachment.mimeType, size: attachment.storedSizeBytes });
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await request.formData();
+      const files = formData.getAll("files").filter((value): value is File => value instanceof File);
+      if (!files.length) return fail("No se recibieron adjuntos");
+      attachments = await Promise.all(files.map((file) => saveUploadedFile(id, file)));
+    } else {
+      const body = await request.json();
+      attachments = Array.isArray(body.attachments) ? body.attachments as TicketAttachment[] : [];
+      for (const attachment of attachments) {
+        validateAttachment({ name: attachment.name, type: attachment.mimeType, size: attachment.storedSizeBytes });
+      }
     }
 
-    return ok({ ticket: addTicketAttachments(id, session.userId, attachments) });
+    if (!attachments.length) return fail("No se recibieron adjuntos");
+    return ok({ ticket: await addTicketAttachments(id, session.userId, attachments) });
   } catch (error) {
     return fail(error instanceof Error ? error.message : "No fue posible agregar adjuntos");
   }

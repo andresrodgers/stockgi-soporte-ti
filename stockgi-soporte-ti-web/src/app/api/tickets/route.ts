@@ -1,4 +1,4 @@
-﻿import { createTicketForUser, listTicketsForUser } from "@/server/tickets";
+import { createTicketForUser, listTicketsForUser } from "@/server/tickets";
 import { fail, ok, requireString } from "@/server/http";
 import { getSession } from "@/server/session";
 
@@ -6,7 +6,7 @@ export async function GET() {
   try {
     const session = await getSession();
     if (!session) return fail("No autenticado", 401);
-    return ok({ tickets: listTicketsForUser(session.userId) });
+    return ok({ tickets: await listTicketsForUser(session.userId) });
   } catch (error) {
     return fail(error instanceof Error ? error.message : "No fue posible consultar tickets");
   }
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const session = await getSession();
     if (!session) return fail("No autenticado", 401);
     const body = await request.json();
-    const ticket = createTicketForUser(session.userId, {
+    const ticket = await createTicketForUser(session.userId, {
       categoryId: requireString(body.categoryId, "categoryId"),
       requestTypeId: requireString(body.requestTypeId, "requestTypeId"),
       subject: requireString(body.subject, "subject"),
@@ -29,4 +29,5 @@ export async function POST(request: Request) {
     return fail(error instanceof Error ? error.message : "No fue posible crear el ticket");
   }
 }
+
 

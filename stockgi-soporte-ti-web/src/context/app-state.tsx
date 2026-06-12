@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { categories, contracts as initialContracts, initialTickets, users as initialUsers } from "@/lib/demo-data";
-import type { Contract, Priority, Role, Ticket, TicketAttachment, TicketStatus, User } from "@/lib/types";
+import type { Contract, CreateUserInput, Priority, Role, Ticket, TicketAttachment, TicketStatus, User } from "@/lib/types";
 
 type CreateTicketInput = {
   categoryId: string;
@@ -12,7 +12,6 @@ type CreateTicketInput = {
   attachments: TicketAttachment[];
 };
 
-type CreateUserInput = Omit<User, "id">;
 type CreateContractInput = Omit<Contract, "id">;
 
 type ApiResponse<T> = { data?: T; error?: string };
@@ -258,6 +257,7 @@ export const statusOptions: TicketStatus[] = [
   "Reabierto",
   "Cancelado",
 ];
+
 
 
 

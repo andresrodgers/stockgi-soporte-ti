@@ -1,4 +1,4 @@
-﻿# Plan Servidor Produccion - StockGI Soporte TI
+# Plan Servidor Produccion - StockGI Soporte TI
 
 ## Estado actual del servidor
 
@@ -35,7 +35,7 @@ Usuarios finales
           -> App StockGI Soporte TI
           -> Futuras apps web
         -> PostgreSQL
-        -> Storage local o MinIO
+        -> Storage local privado
         -> Backups
 
 Equipo tecnico
@@ -172,7 +172,7 @@ Objetivo:
 - Terminar frontend.
 - Terminar API interna.
 - Terminar modelo de datos.
-- Preparar conexion real a PostgreSQL/Supabase o PostgreSQL local.
+- Preparar y probar conexion real a PostgreSQL local.
 
 ### Fase 2 - Preparar servidor por SSH
 
@@ -196,30 +196,24 @@ Instalar:
 
 Crear en el proyecto:
 
-- `Dockerfile`
-- `docker-compose.yml`
-- `.env.production.example`
-- scripts de deploy
-- configuracion de proxy
+- `Dockerfile` creado
+- `docker-compose.yml` creado
+- `.env.production.example` creado
+- scripts de migracion, seed, backup y limpieza creados
+- Cloudflare Tunnel pendiente de credenciales reales
 
 Servicios esperados:
 
 ```text
-stockgi-app
-postgres
-storage/minio opcional
-caddy o nginx
-backup
+stockgi_soporte_ti_app
+stockgi_soporte_ti_postgres
+stockgi_soporte_ti_cloudflared
+stockgi_soporte_ti_backup
 ```
 
 ### Fase 4 - Base de datos real
 
-Definir si produccion usara:
-
-- Supabase cloud
-- PostgreSQL local en la VM
-
-Si se usa PostgreSQL local:
+Produccion usara PostgreSQL local en la VM:
 
 - Crear DB `stockgi_soporte_ti`
 - Crear usuario de base de datos
@@ -261,7 +255,7 @@ Validar:
 - Convertir llave `.ppk` a formato OpenSSH si se usara PowerShell.
 - Confirmar si StockGI tiene dominio/subdominio disponible.
 - Confirmar si hay IP publica fija o si se usara Cloudflare Tunnel.
-- Definir si la base final sera Supabase cloud o PostgreSQL local en VM.
+- Base final definida: PostgreSQL local en VM.
 - Preparar Dockerfile y docker-compose para despliegue.
 
 ## Decision recomendada con informacion actual
@@ -273,7 +267,7 @@ Dominio: stockgi.com
 DNS actual: web principal en Hostinger; existe acceso a Cloudflare con dominio en plan Free
 Publicacion: Cloudflare Tunnel
 Base de datos: PostgreSQL local en la VM
-Archivos: almacenamiento local privado o MinIO, con metadata en PostgreSQL
+Archivos: almacenamiento local privado, con metadata en PostgreSQL
 Acceso tecnico: Tailscale + SSH
 Acceso usuarios finales: URL publica HTTPS + login privado de la app
 ```
@@ -320,8 +314,7 @@ Recomendacion:
 - PostgreSQL local en la VM para datos estructurados: usuarios, contratos, tickets, comentarios, auditoria y metadata de adjuntos.
 - No guardar imagenes/PDF directamente dentro de PostgreSQL salvo casos excepcionales.
 - Guardar archivos en storage privado:
-  - opcion simple: carpeta persistente privada en disco;
-  - opcion mas ordenada: MinIO local compatible con S3.
+  - carpeta persistente privada en disco para v1.
 - PostgreSQL guarda solo la metadata del archivo:
   - nombre original;
   - tipo MIME;
@@ -362,7 +355,7 @@ Publicacion publica: Cloudflare Tunnel
 Dominio esperado: soporte.stockgi.com
 DNS: Cloudflare si se confirma migracion de nameservers desde Hostinger
 Base de datos: PostgreSQL local en la VM
-Adjuntos: storage privado local o MinIO
+Adjuntos: storage privado local
 Administracion tecnica: Tailscale + SSH
 ```
 
@@ -376,3 +369,30 @@ Referencias:
 
 - https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/
 - https://www.cloudflare.com/plans/zero-trust-services/
+
+## Estado implementado del despliegue
+
+Ya existe estructura lista para probar en la VM:
+
+```text
+stockgi-soporte-ti-web/Dockerfile
+stockgi-soporte-ti-web/docker-compose.yml
+stockgi-soporte-ti-web/.env.production.example
+stockgi-soporte-ti-web/database/migrations/0001_initial_postgres.sql
+stockgi-soporte-ti-web/database/seeds/0001_seed_minimal.sql
+stockgi-soporte-ti-web/scripts/migrate-postgres.cjs
+stockgi-soporte-ti-web/scripts/seed-postgres.cjs
+stockgi-soporte-ti-web/scripts/backup-postgres.sh
+stockgi-soporte-ti-web/scripts/cleanup-attachments.cjs
+```
+
+Comandos esperados en la VM, despues de clonar repo y crear `.env.production`:
+
+```bash
+cd /opt/stockgi/stockgi-soporte-ti/stockgi-soporte-ti-web
+COMPOSE_PROJECT_NAME=stockgi_soporte_ti docker compose --env-file .env.production up -d --build
+COMPOSE_PROJECT_NAME=stockgi_soporte_ti docker compose --env-file .env.production exec app npm run db:migrate
+COMPOSE_PROJECT_NAME=stockgi_soporte_ti docker compose --env-file .env.production exec app npm run db:seed
+```
+
+Pendiente: Cloudflare Tunnel requiere token/credenciales reales de la cuenta Cloudflare y DNS de `soporte.stockgi.com`.

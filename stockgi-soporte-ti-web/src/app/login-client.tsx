@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -36,8 +36,10 @@ export function LoginClient() {
     });
 
     if (!response.ok) return;
-    setCurrentUserId(selectedUser.id);
-    router.push(rolePath[selectedUser.role]);
+    const payload = await response.json().catch(() => null) as { data?: { user?: { id: string; role: Role; mustChangePassword?: boolean } } } | null;
+    const user = payload?.data?.user;
+    setCurrentUserId(user?.id ?? selectedUser.id);
+    router.push(user?.mustChangePassword ? "/cambiar-contrasena" : rolePath[user?.role ?? selectedUser.role]);
     router.refresh();
   }
 
@@ -104,3 +106,4 @@ export function LoginClient() {
     </main>
   );
 }
+

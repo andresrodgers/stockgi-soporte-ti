@@ -87,7 +87,7 @@ export async function importUsersFromCsv(text: string) {
   const results: BulkImportRowResult[] = [];
   let createdUsers = 0;
 
-  rows.forEach((row, index) => {
+  for (const [index, row] of rows.entries()) {
     const rowNumber = index + 2;
     const contractValue = normalize(row.contrato);
     const cedula = normalize(row.cedula);
@@ -106,10 +106,10 @@ export async function importUsersFromCsv(text: string) {
 
     if (errors.length || !contractId) {
       results.push({ rowNumber, status: "error", cedula, name, contractName: contractValue, errorMessage: errors.join("; ") });
-      return;
+      continue;
     }
 
-    createUser({
+    await createUser({
       contractId,
       cedula,
       name,
@@ -120,10 +120,12 @@ export async function importUsersFromCsv(text: string) {
       position: normalize(row.cargo),
       location: normalize(row.sede),
       status,
+      temporaryPassword: normalize(row.contrasena_temporal),
+      mustChangePassword: true,
     });
     createdUsers += 1;
     results.push({ rowNumber, status: "imported", cedula, name, contractName: contractValue });
-  });
+  }
 
   const errorRows = results.filter((row) => row.status === "error").length;
   const result: BulkImportResult = {
@@ -136,3 +138,5 @@ export async function importUsersFromCsv(text: string) {
 
   return result;
 }
+
+

@@ -1,4 +1,4 @@
-﻿# Memoria de arquitectura de produccion - StockGI Soporte TI
+# Memoria de arquitectura de produccion - StockGI Soporte TI
 
 ## Estado vigente
 
@@ -77,7 +77,7 @@ Decision vigente:
 
 ```text
 Base de datos: PostgreSQL local en la VM
-Adjuntos: storage privado local o MinIO
+Adjuntos: storage privado local
 ```
 
 PostgreSQL debe guardar:
@@ -129,7 +129,7 @@ Agregar DATA_SOURCE="postgres" para produccion local.
 - Tailscale para administracion tecnica SSH.
 - SSH con llave, sin password.
 - PostgreSQL solo accesible desde red interna Docker/VM.
-- Storage/MinIO sin acceso publico directo.
+- Storage local sin acceso publico directo.
 - App publica solo por HTTPS.
 - Cookies de sesion `httpOnly`, `secure`, `sameSite=lax` o mas restrictivo si aplica.
 - Contrasenas con hash fuerte: argon2id recomendado o bcrypt si se prefiere simplicidad.
@@ -146,8 +146,8 @@ Agregar DATA_SOURCE="postgres" para produccion local.
 4. Instalar Docker y Docker Compose en la VM.
 5. Crear despliegue Docker de la app.
 6. Crear servicio PostgreSQL local.
-7. Definir storage local simple o MinIO.
-8. Crear repositorio `postgres` en la app.
+7. Usar storage local privado para adjuntos.
+8. Probar repositorio `postgres` ya implementado en la app.
 9. Configurar Cloudflare Tunnel hacia el puerto interno de la app.
 10. Probar acceso externo por HTTPS.
 
@@ -183,3 +183,29 @@ Ejemplo futuro:
 ```bash
 COMPOSE_PROJECT_NAME=stockgi_soporte_ti docker compose up -d --build
 ```
+
+## Estado implementado en codigo
+
+Fecha de implementacion: 2026-06-11
+
+Ya existe base tecnica para produccion:
+
+- Migracion PostgreSQL local en `stockgi-soporte-ti-web/database/migrations/0001_initial_postgres.sql`.
+- Seed minimo en `stockgi-soporte-ti-web/database/seeds/0001_seed_minimal.sql`.
+- Repositorio `postgres` implementado en `src/server/repositories/postgres-repository.ts`.
+- Sesiones opacas en base de datos para `DATA_SOURCE="postgres"`.
+- Hash de contrasenas con BCrypt cost 12.
+- Cambio obligatorio de contrasena temporal.
+- Storage privado local para adjuntos en `/var/lib/stockgi/uploads` dentro de produccion Docker.
+- Docker Compose aislado con servicios `app`, `postgres`, `cloudflared` y `backup`.
+- Scripts de migracion, seed, backup y limpieza de adjuntos.
+
+Pendientes reales antes de abrir al publico:
+
+1. Crear `.env.production` real en la VM.
+2. Levantar Docker Compose en la VM.
+3. Ejecutar `npm run db:migrate` y `npm run db:seed` dentro del contenedor o job autorizado.
+4. Cambiar la contrasena temporal del primer admin.
+5. Probar backup y restore en base temporal.
+6. Configurar Cloudflare Tunnel y DNS de `soporte.stockgi.com`.
+7. Ejecutar prueba funcional completa con `DATA_SOURCE="postgres"`.

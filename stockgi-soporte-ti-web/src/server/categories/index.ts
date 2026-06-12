@@ -1,5 +1,5 @@
 ﻿import { getRepository } from "@/server/repositories";
 
-export function listCategories() {
+export async function listCategories() {
   return getRepository().listCategories();
 }
