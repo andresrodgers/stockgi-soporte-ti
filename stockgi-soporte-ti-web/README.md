@@ -34,7 +34,7 @@ La produccion objetivo usa:
 - PostgreSQL local en la VM Ubuntu.
 - Storage privado local para adjuntos.
 - Sesiones opacas con cookie `stockgi_session`.
-- Docker Compose aislado con `COMPOSE_PROJECT_NAME=stockgi_soporte_ti`.
+- Docker Compose aislado con `COMPOSE_PROJECT_NAME=stk-soporte`.
 - Cloudflare Tunnel para `soporte.stockgi.com`.
 
 ## Variables
@@ -53,7 +53,7 @@ El seed crea un contrato base y un admin temporal. La contrasena temporal debe c
 ## Docker
 
 ```bash
-COMPOSE_PROJECT_NAME=stockgi_soporte_ti docker compose --env-file .env.production up -d --build
+COMPOSE_PROJECT_NAME=stk-soporte docker compose --env-file .env.production up -d --build
 ```
 
 PostgreSQL no debe exponerse a internet. Cloudflare Tunnel publica solo la app.

@@ -161,13 +161,13 @@ Agregar DATA_SOURCE="postgres" para produccion local.
 Existe otro proyecto de pruebas de Rivio usando Docker Desktop. Para evitar cruces entre proyectos, StockGI debe usar nombres aislados en Docker:
 
 ```text
-Compose project name: stockgi_soporte_ti
-Red Docker: stockgi_soporte_ti_net
-Volumen PostgreSQL: stockgi_soporte_ti_postgres_data
-Volumen storage: stockgi_soporte_ti_storage_data
-Contenedor app: stockgi_soporte_ti_app
-Contenedor db: stockgi_soporte_ti_postgres
-Contenedor tunnel: stockgi_soporte_ti_cloudflared
+Compose project name: stk-soporte
+Red Docker: stk-soporte_net
+Volumen PostgreSQL: stk-soporte_postgres_data
+Volumen storage: stk-soporte_storage_data
+Contenedor app: stk-soporte_app
+Contenedor db: stk-soporte_postgres
+Contenedor tunnel: stk-soporte_cloudflared
 ```
 
 Reglas:
@@ -176,12 +176,12 @@ Reglas:
 - No usar puertos ya ocupados por otros proyectos.
 - En desarrollo local, mantener la app en puerto `3001` si `3000` esta ocupado.
 - En produccion, el puerto interno puede ser `3001` y Cloudflare Tunnel apuntara a ese servicio interno.
-- Definir `COMPOSE_PROJECT_NAME=stockgi_soporte_ti` en `.env` o en el comando de despliegue.
+- Definir `COMPOSE_PROJECT_NAME=stk-soporte` en `.env` o en el comando de despliegue.
 
 Ejemplo futuro:
 
 ```bash
-COMPOSE_PROJECT_NAME=stockgi_soporte_ti docker compose up -d --build
+COMPOSE_PROJECT_NAME=stk-soporte docker compose up -d --build
 ```
 
 ## Estado implementado en codigo

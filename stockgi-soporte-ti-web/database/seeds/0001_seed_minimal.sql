@@ -1,4 +1,4 @@
-﻿-- Seed minimo produccion/local. Cambiar contrasena temporal en primer login.
+-- Seed minimo produccion/local. Cambiar contrasena temporal en primer login.
 
 insert into public.contracts (id, name, client_name, internal_code, status)
 values ('00000000-0000-4000-8000-000000000001', 'StockGI Administracion', 'StockGI', 'STOCKGI-ADMIN', 'active')

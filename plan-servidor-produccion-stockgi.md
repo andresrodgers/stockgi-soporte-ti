@@ -205,10 +205,10 @@ Crear en el proyecto:
 Servicios esperados:
 
 ```text
-stockgi_soporte_ti_app
-stockgi_soporte_ti_postgres
-stockgi_soporte_ti_cloudflared
-stockgi_soporte_ti_backup
+stk-soporte_app
+stk-soporte_postgres
+stk-soporte_cloudflared
+stk-soporte_backup
 ```
 
 ### Fase 4 - Base de datos real
@@ -390,9 +390,9 @@ Comandos esperados en la VM, despues de clonar repo y crear `.env.production`:
 
 ```bash
 cd /opt/stockgi/stockgi-soporte-ti/stockgi-soporte-ti-web
-COMPOSE_PROJECT_NAME=stockgi_soporte_ti docker compose --env-file .env.production up -d --build
-COMPOSE_PROJECT_NAME=stockgi_soporte_ti docker compose --env-file .env.production exec app npm run db:migrate
-COMPOSE_PROJECT_NAME=stockgi_soporte_ti docker compose --env-file .env.production exec app npm run db:seed
+COMPOSE_PROJECT_NAME=stk-soporte docker compose --env-file .env.production up -d --build
+COMPOSE_PROJECT_NAME=stk-soporte docker compose --env-file .env.production exec app npm run db:migrate
+COMPOSE_PROJECT_NAME=stk-soporte docker compose --env-file .env.production exec app npm run db:seed
 ```
 
 Pendiente: Cloudflare Tunnel requiere token/credenciales reales de la cuenta Cloudflare y DNS de `soporte.stockgi.com`.

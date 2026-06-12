@@ -1,4 +1,4 @@
-﻿import { createHmac, randomBytes, timingSafeEqual } from "crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 import type { Role } from "@/lib/types";
 import { query } from "@/server/db";
@@ -17,6 +17,12 @@ function isPostgresMode() {
 
 function secret() {
   return process.env.SESSION_SECRET || "stockgi-demo-session-secret";
+}
+
+function secureCookie() {
+  if (process.env.SESSION_COOKIE_SECURE === "true") return true;
+  if (process.env.SESSION_COOKIE_SECURE === "false") return false;
+  return process.env.NODE_ENV === "production" && (process.env.APP_BASE_URL?.startsWith("https://") ?? true);
 }
 
 function sign(payload: string) {
@@ -96,7 +102,7 @@ export async function setSession(payload: SessionPayload, request?: Request) {
     cookieStore.set(cookieName, `${token}.${sign(token)}`, {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: secureCookie(),
       path: "/",
       maxAge: 60 * 60 * hours,
     });
@@ -106,7 +112,7 @@ export async function setSession(payload: SessionPayload, request?: Request) {
   cookieStore.set(cookieName, encodeSession(payload), {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: secureCookie(),
     path: "/",
     maxAge: 60 * 60 * 8,
   });
