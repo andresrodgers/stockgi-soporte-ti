@@ -306,4 +306,4 @@ Pendiente de infraestructura:
 - Configurar Cloudflare Tunnel para `soporte.stockgi.com`.
 - Hacer prueba funcional completa con `DATA_SOURCE="postgres"`.
 
-Nota tecnica: `next build` pasa correctamente. Turbopack puede mostrar una advertencia por el endpoint que lee archivos privados del disco para descarga autenticada; no bloquea el build.
+Nota tecnica: el build de produccion usa `next build --webpack` porque Turbopack muestra una advertencia NFT al trazar el endpoint de descarga autenticada de archivos privados. Webpack valida limpio este caso. El endpoint quedo como Node runtime dinamico y el storage valida rutas para evitar path traversal.

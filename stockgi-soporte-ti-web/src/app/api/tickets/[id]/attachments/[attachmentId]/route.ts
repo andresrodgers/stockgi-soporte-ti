@@ -1,5 +1,7 @@
-﻿import { NextResponse } from "next/server";
-import { getAuthorizedAttachmentFile } from "@/server/attachments/storage";
+import { NextResponse } from "next/server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";import { getAuthorizedAttachmentFile } from "@/server/attachments/storage";
 import { fail } from "@/server/http";
 import { getSession } from "@/server/session";
 

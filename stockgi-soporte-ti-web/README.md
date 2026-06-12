@@ -17,10 +17,14 @@ DATA_SOURCE="demo"
 
 ## Validacion
 
-```powershell
+`powershell
 npm run lint
 npm run build
-```
+` 
+
+El script 
+pm run build usa 
+ext build --webpack para evitar el warning de Turbopack en el endpoint de descarga autenticada de adjuntos privados.
 
 ## Produccion objetivo
 

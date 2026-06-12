@@ -7,7 +7,16 @@ import { validateAttachment } from "@/server/attachments";
 import { getTicketForUser } from "@/server/tickets";
 
 function storageRoot() {
-  return process.env.UPLOAD_STORAGE_PATH || ".stockgi-uploads";
+  return path.resolve(process.env.UPLOAD_STORAGE_PATH || "storage/uploads");
+}
+
+function privatePath(relativePath: string) {
+  const root = storageRoot();
+  const absolutePath = path.resolve(root, relativePath);
+  if (absolutePath !== root && !absolutePath.startsWith(root + path.sep)) {
+    throw new Error("Ruta de adjunto invalida");
+  }
+  return absolutePath;
 }
 
 function safeName(name: string) {
@@ -18,8 +27,8 @@ export async function saveUploadedFile(ticketId: string, file: File): Promise<Ti
   const base = validateAttachment({ name: file.name, type: file.type, size: file.size });
   const id = randomUUID();
   const filename = `${id}-${safeName(file.name)}`;
-  const relativePath = path.join("tickets", ticketId, filename);
-  const absolutePath = path.join(storageRoot(), relativePath);
+  const relativePath = path.posix.join("tickets", ticketId, filename);
+  const absolutePath = privatePath(relativePath);
   await mkdir(path.dirname(absolutePath), { recursive: true });
   const bytes = Buffer.from(await file.arrayBuffer());
   await writeFile(absolutePath, bytes, { flag: "wx" });
@@ -33,7 +42,7 @@ export async function saveUploadedFile(ticketId: string, file: File): Promise<Ti
     storedSizeBytes: bytes.length,
     compressionStatus: base.compressionStatus,
     retentionDays: base.retentionDays,
-    storagePath: relativePath.replace(/\\/g, "/"),
+    storagePath: relativePath,
   };
 }
 
@@ -47,7 +56,7 @@ export async function getAuthorizedAttachmentFile(ticketId: string, attachmentId
   `, [attachmentId, ticketId]);
   const row = rows[0];
   if (!row) throw new Error("Adjunto no encontrado");
-  const absolutePath = path.join(storageRoot(), row.storage_path);
+  const absolutePath = privatePath(row.storage_path);
   await stat(absolutePath);
   return { bytes: await readFile(absolutePath), filename: row.original_filename, mimeType: row.mime_type };
 }
