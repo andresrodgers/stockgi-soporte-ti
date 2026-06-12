@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -70,7 +70,7 @@ export default function UsuariosPage() {
           <div className="overflow-x-auto">
             <table className="min-w-[880px] w-full text-left text-[13px]">
               <thead className="text-[11px] uppercase tracking-[0.08em] text-[var(--brand-secondary)]">
-                <tr><th className="px-5 py-3">Nombre</th><th className="px-5 py-3">Cedula</th><th className="px-5 py-3">Contrato</th><th className="px-5 py-3">Rol</th><th className="px-5 py-3">Estado</th><th className="px-5 py-3">Accion</th></tr>
+                <tr><th className="px-5 py-3">Nombre</th><th className="px-5 py-3">Cédula</th><th className="px-5 py-3">Contrato</th><th className="px-5 py-3">Rol</th><th className="px-5 py-3">Estado</th><th className="px-5 py-3">Accion</th></tr>
               </thead>
               <tbody>
                 {users.map((user) => (
@@ -96,7 +96,7 @@ export default function UsuariosPage() {
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--brand-secondary)]">{editingUser ? "Editar usuario" : "Nuevo usuario"}</p>
                 <h2 id="user-modal-title" className="mt-1 text-[20px] font-semibold">{editingUser ? "Actualizar usuario" : "Crear usuario"}</h2>
-                <p className="mt-1 text-[13px] text-[var(--brand-secondary)]">{editingUser ? "Cambia contrato, rol, estado o datos del usuario." : "Completa los datos minimos para entregar acceso al portal."}</p>
+                <p className="mt-1 text-[13px] text-[var(--brand-secondary)]">{editingUser ? "Cambia contrato, rol, estado o datos del usuario." : "Completa los datos mínimos para entregar acceso al portal."}</p>
               </div>
               <button onClick={() => setOpen(false)} className="grid size-9 place-items-center rounded-[11px] bg-[var(--app-muted)] text-[18px] font-semibold text-[var(--brand-secondary)] hover:bg-[var(--brand-primary-soft)]">x</button>
             </div>
@@ -120,7 +120,7 @@ export default function UsuariosPage() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Cedula">
+                <Field label="Cédula">
                   <input name="cedula" className={inputClass} defaultValue={editingUser?.cedula} placeholder="Ej. 10101010" required />
                 </Field>
                 <Field label="Nombre completo">
@@ -129,7 +129,7 @@ export default function UsuariosPage() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Contrasena temporal">
+                <Field label="Contraseña temporal">
                   <input name="temporaryPassword" className={inputClass} type="password" placeholder={editingUser ? "Dejar en blanco si no cambia" : "Clave inicial"} required={!editingUser} />
                 </Field>
                 <Field label="Estado">

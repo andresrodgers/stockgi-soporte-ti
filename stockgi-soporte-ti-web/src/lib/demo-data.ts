@@ -1,4 +1,4 @@
-﻿import type { Contract, Ticket, TicketCategory, User } from "./types";
+import type { Contract, Ticket, TicketCategory, User } from "./types";
 
 export const contracts: Contract[] = [
   { id: "stockgi-admin", name: "StockGI Administracion", client: "StockGI", status: "Activo" },
@@ -64,14 +64,14 @@ export const technicians = users.filter((user) => user.role === "ti_operativo");
 export const categories: TicketCategory[] = [
   {
     id: "accesos",
-    name: "Accesos y contrasenas",
+    name: "Accesos y contraseñas",
     description: "Bloqueos, claves, permisos y accesos a sistemas.",
     requestTypes: [
-      { id: "restablecer-contrasena", name: "Restablecer contrasena", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "usuario-bloqueado", name: "Usuario bloqueado", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "crear-acceso", name: "Crear acceso", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "cambiar-permisos", name: "Cambiar permisos", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "retirar-acceso", name: "Retirar acceso", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
+      { id: "restablecer-contrasena", name: "Restablecer contraseña", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "usuario-bloqueado", name: "Usuario bloqueado", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "crear-acceso", name: "Crear acceso", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "cambiar-permisos", name: "Cambiar permisos", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "retirar-acceso", name: "Retirar acceso", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
     ],
   },
   {
@@ -80,11 +80,11 @@ export const categories: TicketCategory[] = [
     description: "Computadores, pantallas, teclado, mouse, cargador y mantenimiento.",
     requestTypes: [
       { id: "equipo-no-enciende", name: "Equipo no enciende", priority: "Alta", firstResponseSla: "1 hora", resolutionSla: "8 horas", attachmentRule: "Recomendado" },
-      { id: "equipo-lento", name: "Equipo lento", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "Recomendado" },
-      { id: "pantalla", name: "Pantalla", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "Recomendado" },
-      { id: "teclado-mouse", name: "Teclado o mouse", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "Recomendado" },
-      { id: "cargador", name: "Cargador", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "Recomendado" },
-      { id: "mantenimiento", name: "Mantenimiento", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 dias habiles", attachmentRule: "No obligatorio" },
+      { id: "equipo-lento", name: "Equipo lento", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "Recomendado" },
+      { id: "pantalla", name: "Pantalla", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "Recomendado" },
+      { id: "teclado-mouse", name: "Teclado o mouse", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "Recomendado" },
+      { id: "cargador", name: "Cargador", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "Recomendado" },
+      { id: "mantenimiento", name: "Mantenimiento", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 días hábiles", attachmentRule: "No obligatorio" },
     ],
   },
   {
@@ -93,8 +93,8 @@ export const categories: TicketCategory[] = [
     description: "Internet, red, WiFi, VPN o acceso a red interna.",
     requestTypes: [
       { id: "sin-internet", name: "Sin internet", priority: "Alta", firstResponseSla: "1 hora", resolutionSla: "8 horas", attachmentRule: "No obligatorio" },
-      { id: "red-lenta", name: "Red lenta", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "wifi", name: "WiFi", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
+      { id: "red-lenta", name: "Red lenta", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "wifi", name: "WiFi", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
       { id: "vpn", name: "VPN", priority: "Alta", firstResponseSla: "1 hora", resolutionSla: "8 horas", attachmentRule: "No obligatorio" },
       { id: "red-interna", name: "No accede a red interna", priority: "Alta", firstResponseSla: "1 hora", resolutionSla: "8 horas", attachmentRule: "No obligatorio" },
     ],
@@ -104,12 +104,12 @@ export const categories: TicketCategory[] = [
     name: "Correo y comunicacion",
     description: "Correo electronico, reuniones virtuales, telefonia o celular corporativo.",
     requestTypes: [
-      { id: "no-envia-correos", name: "No envia correos", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "no-recibe-correos", name: "No recibe correos", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "configuracion-correo", name: "Configuracion de correo", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "firma-correo", name: "Firma de correo", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "reuniones", name: "Teams, Meet o Zoom", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "telefonia", name: "Telefonia o celular corporativo", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
+      { id: "no-envia-correos", name: "No envia correos", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "no-recibe-correos", name: "No recibe correos", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "configuracion-correo", name: "Configuracion de correo", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "firma-correo", name: "Firma de correo", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "reuniones", name: "Teams, Meet o Zoom", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "telefonia", name: "Telefonia o celular corporativo", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
     ],
   },
   {
@@ -117,11 +117,11 @@ export const categories: TicketCategory[] = [
     name: "Impresoras y escaner",
     description: "Impresion, escaneo, configuracion o insumos.",
     requestTypes: [
-      { id: "no-imprime", name: "No imprime", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "Recomendado" },
-      { id: "no-escanea", name: "No escanea", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "Recomendado" },
-      { id: "configuracion-impresora", name: "Configuracion", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "error-impresora", name: "Error de impresora", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "Recomendado" },
-      { id: "toner", name: "Solicitud de toner o insumo", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 dias habiles", attachmentRule: "No obligatorio" },
+      { id: "no-imprime", name: "No imprime", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "Recomendado" },
+      { id: "no-escanea", name: "No escanea", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "Recomendado" },
+      { id: "configuracion-impresora", name: "Configuracion", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "error-impresora", name: "Error de impresora", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "Recomendado" },
+      { id: "toner", name: "Solicitud de toner o insumo", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 días hábiles", attachmentRule: "No obligatorio" },
     ],
   },
   {
@@ -129,11 +129,11 @@ export const categories: TicketCategory[] = [
     name: "Software y sistemas internos",
     description: "Aplicaciones instaladas, sistemas corporativos, SLI y licencias.",
     requestTypes: [
-      { id: "error-aplicacion", name: "Error en aplicacion", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "Recomendado" },
-      { id: "instalacion-software", name: "Instalacion de software autorizado", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "actualizacion", name: "Actualizacion", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 dias habiles", attachmentRule: "No obligatorio" },
+      { id: "error-aplicacion", name: "Error en aplicacion", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "Recomendado" },
+      { id: "instalacion-software", name: "Instalacion de software autorizado", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "actualizacion", name: "Actualizacion", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 días hábiles", attachmentRule: "No obligatorio" },
       { id: "sli", name: "SLI o sistema interno", priority: "Alta", firstResponseSla: "1 hora", resolutionSla: "8 horas", attachmentRule: "Recomendado" },
-      { id: "licencia-software", name: "Licencia de software", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
+      { id: "licencia-software", name: "Licencia de software", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
     ],
   },
   {
@@ -141,12 +141,12 @@ export const categories: TicketCategory[] = [
     name: "Recursos TI",
     description: "Solicitudes planificadas de equipos, perifericos, licencias, ingresos o retiros.",
     requestTypes: [
-      { id: "solicitud-equipo", name: "Solicitud de equipo", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "solicitud-periferico", name: "Solicitud de periferico", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "solicitud-licencia", name: "Solicitud de licencia", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "usuario-nuevo", name: "Usuario nuevo", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "alistamiento-ingreso", name: "Alistamiento para ingreso", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
-      { id: "retiro-usuario", name: "Retiro de usuario", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 dias habiles", attachmentRule: "No obligatorio" },
+      { id: "solicitud-equipo", name: "Solicitud de equipo", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "solicitud-periferico", name: "Solicitud de periferico", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "solicitud-licencia", name: "Solicitud de licencia", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "usuario-nuevo", name: "Usuario nuevo", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "alistamiento-ingreso", name: "Alistamiento para ingreso", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
+      { id: "retiro-usuario", name: "Retiro de usuario", priority: "Media", firstResponseSla: "4 horas", resolutionSla: "2 días hábiles", attachmentRule: "No obligatorio" },
     ],
   },
   {
@@ -154,7 +154,7 @@ export const categories: TicketCategory[] = [
     name: "Otro",
     description: "Casos que no encajan en las categorias anteriores.",
     requestTypes: [
-      { id: "no-clasificada", name: "Solicitud no clasificada", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 dias habiles", attachmentRule: "No obligatorio" },
+      { id: "no-clasificada", name: "Solicitud no clasificada", priority: "Baja", firstResponseSla: "1 dia habil", resolutionSla: "5 días hábiles", attachmentRule: "No obligatorio" },
     ],
   },
 ];

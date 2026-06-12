@@ -76,7 +76,7 @@ export function LoginClient() {
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--brand-secondary)]">Acceso privado</p>
           <h2 className="mt-2 text-[24px] font-semibold text-[var(--foreground)]">Ingresar al portal</h2>
           <p className="mt-2 text-[13px] leading-6 text-[var(--brand-secondary)]">
-            Ingresa con el contrato asignado, tu cedula y la contrasena entregada por StockGI.
+            Ingresa con el contrato asignado, tu cédula y la contraseña entregada por StockGI.
           </p>
 
           <form onSubmit={login} className="mt-6 grid gap-4">
@@ -88,10 +88,10 @@ export function LoginClient() {
                 ))}
               </select>
             </Field>
-            <Field label="Cedula">
+            <Field label="Cédula">
               <input className={inputClass} value={documentId} onChange={(event) => setDocumentId(event.target.value)} autoComplete="username" inputMode="numeric" required />
             </Field>
-            <Field label="Contrasena">
+            <Field label="Contraseña">
               <input className={inputClass} type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required />
             </Field>
             {error ? <p className="rounded-[12px] bg-red-50 px-3 py-2 text-[12px] font-semibold text-red-700">{error}</p> : null}

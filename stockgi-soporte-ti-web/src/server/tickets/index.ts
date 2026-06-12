@@ -1,4 +1,4 @@
-﻿import type { Role, Ticket, TicketAttachment } from "@/lib/types";
+import type { Role, Ticket, TicketAttachment } from "@/lib/types";
 import { nextDueDate, nowLabel } from "@/server/demo-store";
 import { assertRole, getCurrentUser } from "@/server/auth";
 import { getRepository } from "@/server/repositories";
@@ -36,7 +36,7 @@ async function canViewTicket(ticket: Ticket, userId: string) {
 export async function listTicketsForUser(userId: string) {
   const user = await getCurrentUser(userId);
   if (!user) throw new Error("Sesion invalida");
-  if (user.mustChangePassword) throw new Error("Debe cambiar la contrasena temporal antes de continuar");
+  if (user.mustChangePassword) throw new Error("Debe cambiar la contraseña temporal antes de continuar");
   const { tickets } = await repoData();
 
   if (user.role === "ti_administrativo") return tickets;
@@ -82,7 +82,7 @@ export async function createTicketForUser(userId: string, input: CreateTicketInp
 export async function addTicketComment(ticketId: string, userId: string, message: string, roleOverride?: Role) {
   const user = await getCurrentUser(userId);
   if (!user) throw new Error("Sesion invalida");
-  if (user.mustChangePassword) throw new Error("Debe cambiar la contrasena temporal antes de continuar");
+  if (user.mustChangePassword) throw new Error("Debe cambiar la contraseña temporal antes de continuar");
   const ticket = await findTicket(ticketId);
   if (!(await canViewTicket(ticket, userId))) throw new Error("No autorizado");
   const now = nowLabel();

@@ -10,7 +10,7 @@ insert into public.app_users (
 values (
   '00000000-0000-4000-8000-000000000101',
   '00000000-0000-4000-8000-000000000001',
-  '30303030',
+  '1075297653',
   'Administrador StockGI',
   'ti_administrativo',
   '$2b$12$8Abirdrb4EGmNKAR4IRbyufIUhBGd/04r2hGvXz.Kwgl5mMqnmJ72',
