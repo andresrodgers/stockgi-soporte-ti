@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "StockGI Soporte TI",
-  description: "Prototipo funcional de mesa de ayuda TI StockGI",
+  description: "Mesa de ayuda TI privada para StockGI",
 };
 
 export default function RootLayout({
