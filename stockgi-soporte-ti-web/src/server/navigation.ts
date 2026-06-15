@@ -14,7 +14,7 @@ type PageSessionOptions = {
 };
 
 function homeForUser(user: User) {
-  return user.mustChangePassword ? "/cambiar-contrasena" : roleHome[user.role];
+  return user.mustChangePassword ? "/" : roleHome[user.role];
 }
 
 export async function getAuthenticatedPageUser(): Promise<User | null> {
@@ -32,7 +32,7 @@ export async function requirePageSession(allowedRoles?: Role[], options: PageSes
   }
 
   if (user.mustChangePassword && !options.allowPasswordChangeRequired) {
-    redirect("/cambiar-contrasena");
+    redirect("/");
   }
 
   if (allowedRoles?.length && !allowedRoles.includes(user.role)) {
@@ -45,7 +45,7 @@ export async function requirePageSession(allowedRoles?: Role[], options: PageSes
 export async function redirectIfAuthenticated() {
   const user = await getAuthenticatedPageUser();
 
-  if (user) {
+  if (user && !user.mustChangePassword) {
     redirect(homeForUser(user));
   }
 }

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -29,9 +29,9 @@ export default function ContratosPage() {
     <AppShell>
       <div className="grid gap-[18px]">
         <PageHeader
-          eyebrow="Administracion"
+          eyebrow="Administración"
           title="Contratos"
-          description="Crea contratos y activa o inactiva operaciones sin borrar historial. Los contratos inactivos no deberian aparecer en login final."
+          description="Crea contratos y activa o inactiva operaciónes sin borrar historial. Los contratos inactivos no deberian aparecer en login final."
           action={<button onClick={() => setOpen(true)} className="h-10 rounded-[13px] bg-[var(--brand-primary)] px-4 text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)]">Nuevo contrato</button>}
         />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -71,13 +71,13 @@ export default function ContratosPage() {
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--brand-secondary)]">Nuevo contrato</p>
                 <h2 id="contract-modal-title" className="mt-1 text-[20px] font-semibold">Crear contrato</h2>
-                <p className="mt-1 text-[13px] text-[var(--brand-secondary)]">Agrega una operacion o cliente para segmentar usuarios y tickets.</p>
+                <p className="mt-1 text-[13px] text-[var(--brand-secondary)]">Agrega una operación o cliente para segmentar usuarios y tickets.</p>
               </div>
               <button onClick={() => setOpen(false)} className="grid size-9 place-items-center rounded-[11px] bg-[var(--app-muted)] text-[18px] font-semibold text-[var(--brand-secondary)] hover:bg-[var(--brand-primary-soft)]">x</button>
             </div>
             <form onSubmit={submit} className="grid gap-4 px-6 py-5">
               <Field label="Nombre del contrato">
-                <input name="name" className={inputClass} placeholder="Ej. Operacion Occidente" required />
+                <input name="name" className={inputClass} placeholder="Ej. Operación Occidente" required />
               </Field>
               <Field label="Cliente o empresa relacionada">
                 <input name="client" className={inputClass} placeholder="Ej. Cliente externo" required />
@@ -88,7 +88,7 @@ export default function ContratosPage() {
                   <option>Inactivo</option>
                 </select>
               </Field>
-              {saved ? <p className="rounded-[13px] bg-[var(--brand-primary-soft)] p-3 text-[13px] font-semibold text-[var(--brand-primary)]">Contrato creado en modo demo.</p> : null}
+              {saved ? <p className="rounded-[13px] bg-[var(--brand-primary-soft)] p-3 text-[13px] font-semibold text-[var(--brand-primary)]">Contrato guardado correctamente.</p> : null}
               <div className="flex flex-col-reverse gap-2 border-t border-[var(--app-border-soft)] pt-4 sm:flex-row sm:justify-end">
                 <button type="button" onClick={() => setOpen(false)} className="h-11 rounded-[14px] bg-white px-5 text-[13px] font-semibold text-[var(--brand-primary)] shadow-sm ring-1 ring-[var(--app-border)]">Cancelar</button>
                 <button className="h-11 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)]">Guardar contrato</button>

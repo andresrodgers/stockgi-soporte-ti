@@ -1,16 +1,20 @@
+import { validateCsrfToken } from "@/server/csrf";
+import { fail, ok, publicError } from "@/server/http";
+import { getSession, withSessionContext } from "@/server/session";
 import { takeTicket } from "@/server/tickets";
-import { fail, ok } from "@/server/http";
-import { getSession } from "@/server/session";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function POST(_request: Request, context: RouteContext) {
+export async function POST(request: Request, context: RouteContext) {
   try {
     const session = await getSession();
     if (!session) return fail("No autenticado", 401);
-    const { id } = await context.params;
-    return ok({ ticket: await takeTicket(id, session.userId) });
+    return withSessionContext(session, async () => {
+      await validateCsrfToken(request, session);
+      const { id } = await context.params;
+      return ok({ ticket: await takeTicket(id, session.userId) });
+    });
   } catch (error) {
-    return fail(error instanceof Error ? error.message : "No fue posible tomar el ticket");
+    return publicError(error, "No fue posible tomar el ticket", 400);
   }
 }

@@ -1,4 +1,4 @@
-﻿import type { Contract } from "@/lib/types";
+import type { Contract } from "@/lib/types";
 import { getRepository } from "@/server/repositories";
 
 export async function listContracts() {

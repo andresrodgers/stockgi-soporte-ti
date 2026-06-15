@@ -1,19 +1,12 @@
-﻿import { demoRepository } from "./demo-repository";
 import { postgresRepository } from "./postgres-repository";
-import { supabaseRepository } from "./supabase-repository";
 import type { DataRepository } from "./types";
 
 export function getRepository(): DataRepository {
-  if (process.env.DATA_SOURCE === "postgres") {
+  if (!process.env.DATA_SOURCE || process.env.DATA_SOURCE === "postgres") {
     return postgresRepository;
   }
 
-  if (process.env.DATA_SOURCE === "supabase") {
-    return supabaseRepository;
-  }
-
-  return demoRepository;
+  throw new Error(`DATA_SOURCE no soportado: ${process.env.DATA_SOURCE}`);
 }
 
 export type { DataRepository } from "./types";
-

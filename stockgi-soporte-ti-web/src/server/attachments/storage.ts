@@ -2,8 +2,8 @@ import { randomUUID } from "crypto";
 import { mkdir, readFile, stat, writeFile } from "fs/promises";
 import path from "path";
 import type { TicketAttachment } from "@/lib/types";
+import { validateAttachmentBuffer } from "@/server/attachments";
 import { query } from "@/server/db";
-import { validateAttachment } from "@/server/attachments";
 import { getTicketForUser } from "@/server/tickets";
 
 function storageRoot() {
@@ -24,13 +24,13 @@ function safeName(name: string) {
 }
 
 export async function saveUploadedFile(ticketId: string, file: File): Promise<TicketAttachment> {
-  const base = validateAttachment({ name: file.name, type: file.type, size: file.size });
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const base = validateAttachmentBuffer({ name: file.name, type: file.type, size: file.size }, bytes);
   const id = randomUUID();
   const filename = `${id}-${safeName(file.name)}`;
   const relativePath = path.posix.join("tickets", ticketId, filename);
   const absolutePath = privatePath(relativePath);
   await mkdir(path.dirname(absolutePath), { recursive: true });
-  const bytes = Buffer.from(await file.arrayBuffer());
   await writeFile(absolutePath, bytes, { flag: "wx" });
 
   return {

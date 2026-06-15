@@ -1,8 +1,13 @@
-﻿import type { TicketAttachment } from "@/lib/types";
+import type { TicketAttachment } from "@/lib/types";
 
 const maxBytes = 10 * 1024 * 1024;
 const imageTypes = ["image/png", "image/jpeg", "image/webp"];
 const allowedTypes = [...imageTypes, "application/pdf"];
+
+export type PreparedTicketUpload = {
+  attachments: TicketAttachment[];
+  files: File[];
+};
 
 function formatExtension(mimeType: string) {
   if (mimeType === "image/webp") return "webp";
@@ -40,15 +45,18 @@ async function compressImage(file: File) {
 
   const outputType = "image/webp";
   const blob = await canvasToBlob(canvas, outputType);
+  const name = `${file.name.replace(/\.[^.]+$/, "")}.${formatExtension(outputType)}`;
   return {
     blob,
+    file: new File([blob], name, { type: outputType }),
     mimeType: outputType,
-    name: `${file.name.replace(/\.[^.]+$/, "")}.${formatExtension(outputType)}`,
+    name,
   };
 }
 
-export async function prepareTicketAttachments(files: File[]) {
+export async function prepareTicketUpload(files: File[]): Promise<PreparedTicketUpload> {
   const attachments: TicketAttachment[] = [];
+  const uploadFiles: File[] = [];
 
   for (const file of files) {
     if (!allowedTypes.includes(file.type)) {
@@ -61,6 +69,7 @@ export async function prepareTicketAttachments(files: File[]) {
 
     if (imageTypes.includes(file.type)) {
       const compressed = await compressImage(file);
+      uploadFiles.push(compressed.file);
       attachments.push({
         id: `att-${crypto.randomUUID()}`,
         name: compressed.name,
@@ -72,6 +81,7 @@ export async function prepareTicketAttachments(files: File[]) {
         retentionDays: 30,
       });
     } else {
+      uploadFiles.push(file);
       attachments.push({
         id: `att-${crypto.randomUUID()}`,
         name: file.name,
@@ -85,7 +95,11 @@ export async function prepareTicketAttachments(files: File[]) {
     }
   }
 
-  return attachments;
+  return { attachments, files: uploadFiles };
+}
+
+export async function prepareTicketAttachments(files: File[]) {
+  return (await prepareTicketUpload(files)).attachments;
 }
 
 export function formatBytes(bytes: number) {

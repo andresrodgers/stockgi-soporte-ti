@@ -1,20 +1,45 @@
-﻿import type { Contract, CreateUserInput, Ticket, TicketCategory, User } from "@/lib/types";
+import type { Contract, CreateUserInput, CreatedUserResult, PaginatedResult, Role, Ticket, TicketAttachment, TicketCategory, TicketComment, TicketStatus, User } from "@/lib/types";
 
 export type CreateTicketRecord = Ticket;
 export type CreateUserRecord = CreateUserInput;
 export type CreateContractRecord = Omit<Contract, "id">;
 
+export type UserPageOptions = {
+  page: number;
+  pageSize: number;
+};
+
+export type TicketPageOptions = {
+  page: number;
+  pageSize: number;
+  role: Role;
+  userId: string;
+  status?: TicketStatus;
+  scope?: "all" | "assigned" | "waiting";
+};
+
+export type UpdateTicketRecord = Partial<Ticket> & {
+  actorUserId?: string;
+  commentType?: "comment" | "request_info" | "resolution" | "system";
+  attachmentCommentId?: string | null;
+  closedById?: string | null;
+  comments?: TicketComment[];
+  attachments?: TicketAttachment[];
+};
+
 export interface DataRepository {
-  readonly source: "demo" | "supabase" | "postgres";
-  listContracts(): Contract[] | Promise<Contract[]>;
-  createContract(input: CreateContractRecord): Contract | Promise<Contract>;
-  updateContract(contractId: string, updates: Partial<Contract>): Contract | Promise<Contract>;
-  listUsers(): User[] | Promise<User[]>;
-  createUser(input: CreateUserRecord): User | Promise<User>;
-  updateUser(userId: string, updates: Partial<User>): User | Promise<User>;
-  listCategories(): TicketCategory[] | Promise<TicketCategory[]>;
-  listTickets(): Ticket[] | Promise<Ticket[]>;
-  createTicket(ticket: CreateTicketRecord): Ticket | Promise<Ticket>;
-  updateTicket(ticketId: string, updates: Partial<Ticket>): Ticket | Promise<Ticket>;
+  readonly source: "postgres";
+  listContracts(): Promise<Contract[]>;
+  createContract(input: CreateContractRecord): Promise<Contract>;
+  updateContract(contractId: string, updates: Partial<Contract>): Promise<Contract>;
+  listUsers(): Promise<User[]>;
+  listUsersPage(options: UserPageOptions): Promise<PaginatedResult<User>>;
+  createUser(input: CreateUserRecord): Promise<CreatedUserResult>;
+  updateUser(userId: string, updates: Partial<User>): Promise<User>;
+  listCategories(): Promise<TicketCategory[]>;
+  listTickets(): Promise<Ticket[]>;
+  listTicketsPage(options: TicketPageOptions): Promise<PaginatedResult<Ticket>>;
+  createTicket(ticket: CreateTicketRecord): Promise<Ticket>;
+  updateTicket(ticketId: string, updates: UpdateTicketRecord): Promise<Ticket>;
 }
 

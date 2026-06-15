@@ -1,7 +1,5 @@
-import { requirePageSession } from "@/server/navigation";
-import { ChangePasswordClient } from "./change-password-client";
+import { redirect } from "next/navigation";
 
-export default async function ChangePasswordPage() {
-  await requirePageSession(undefined, { allowPasswordChangeRequired: true });
-  return <ChangePasswordClient />;
+export default function ChangePasswordPage() {
+  redirect("/");
 }

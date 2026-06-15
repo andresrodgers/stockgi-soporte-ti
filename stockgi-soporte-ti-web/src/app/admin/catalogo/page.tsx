@@ -4,12 +4,12 @@ import { AppShell } from "@/components/app-shell";
 import { Badge, Card, PageHeader, priorityTone } from "@/components/ui";
 import { useAppState } from "@/context/app-state";
 
-export default function CatalogoPage() {
+export default function CatálogoPage() {
   const { categories } = useAppState();
   return (
     <AppShell>
       <div className="grid gap-[18px]">
-        <PageHeader eyebrow="Catalogo fijo" title="Categorias de tickets" description="Catalogo funcional definido para mantener reportes, prioridad y SLA consistentes." />
+        <PageHeader eyebrow="Catálogo fijo" title="Categorías de tickets" description="Catálogo funcional definido para mantener reportes, prioridad y SLA consistentes." />
         <div className="grid gap-4">
           {categories.map((category) => (
             <Card key={category.id} className="overflow-hidden">
@@ -20,7 +20,7 @@ export default function CatalogoPage() {
               <div className="overflow-x-auto">
                 <table className="min-w-[720px] w-full text-left text-[13px]">
                   <thead className="text-[11px] uppercase tracking-[0.08em] text-[var(--brand-secondary)]">
-                    <tr><th className="px-5 py-3">Tipo</th><th className="px-5 py-3">Prioridad</th><th className="px-5 py-3">Primera respuesta</th><th className="px-5 py-3">Solucion</th><th className="px-5 py-3">Adjunto</th></tr>
+                    <tr><th className="px-5 py-3">Tipo</th><th className="px-5 py-3">Prioridad</th><th className="px-5 py-3">Primera respuesta</th><th className="px-5 py-3">Solución</th><th className="px-5 py-3">Adjunto</th></tr>
                   </thead>
                   <tbody>
                     {category.requestTypes.map((type) => (

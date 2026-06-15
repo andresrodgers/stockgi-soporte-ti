@@ -9,10 +9,11 @@
                     "lint":  "eslint",
                     "db:migrate":  "node scripts/migrate-postgres.cjs",
                     "db:seed":  "node scripts/seed-postgres.cjs",
-                    "attachments:cleanup":  "node scripts/cleanup-attachments.cjs"
+                    "attachments:cleanup":  "node scripts/cleanup-attachments.cjs",
+                    "validate:encoding":  "node scripts/validate-encoding.cjs",
+                    "db:seed:demo":  "node scripts/seed-demo-postgres.cjs"
                 },
     "dependencies":  {
-                         "@supabase/supabase-js":  "^2.107.0",
                          "bcryptjs":  "^3.0.3",
                          "next":  "16.2.7",
                          "pg":  "^8.21.0",
@@ -27,7 +28,11 @@
                             "@types/react-dom":  "^19",
                             "eslint":  "^9",
                             "eslint-config-next":  "16.2.7",
+                            "postcss":  "8.5.10",
                             "tailwindcss":  "^4",
                             "typescript":  "^5"
-                        }
+                        },
+    "overrides":  {
+                      "postcss":  "8.5.10"
+                  }
 }

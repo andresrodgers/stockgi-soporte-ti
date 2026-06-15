@@ -1,10 +1,12 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAppState } from "@/context/app-state";
+import { formatRole, t } from "@/i18n";
 import type { Role } from "@/lib/types";
+import { csrfFetch, resetCsrfToken } from "@/lib/api-client";
 
 const roleHome: Record<Role, string> = {
   usuario: "/usuario",
@@ -12,41 +14,52 @@ const roleHome: Record<Role, string> = {
   ti_administrativo: "/admin",
 };
 
-const roleLabel: Record<Role, string> = {
-  usuario: "Usuario",
-  ti_operativo: "TI Operativo",
-  ti_administrativo: "TI Administrativo",
-};
-
-const sectionLabel: Record<Role, string> = {
-  usuario: "StockGI Usuario",
-  ti_operativo: "StockGI Operativo",
-  ti_administrativo: "StockGI Admin",
-};
-
 type NavItem = { href: string; label: string; icon: IconName };
+type NavSection = { title?: string; items: NavItem[] };
 type IconName = "home" | "plus" | "tickets" | "inbox" | "assigned" | "wait" | "dashboard" | "users" | "upload" | "contracts" | "catalog" | "reports";
 
-const navByRole: Record<Role, NavItem[]> = {
-  usuario: [
-    { href: "/usuario", label: "Inicio", icon: "home" },
-    { href: "/usuario/crear-ticket", label: "Crear ticket", icon: "plus" },
-    { href: "/usuario/tickets", label: "Mis tickets", icon: "tickets" },
-  ],
-  ti_operativo: [
-    { href: "/ti", label: "Bandeja", icon: "inbox" },
-    { href: "/ti/asignados", label: "Mis asignaciones", icon: "assigned" },
-    { href: "/ti/espera", label: "En espera", icon: "wait" },
-  ],
-  ti_administrativo: [
-    { href: "/admin", label: "Dashboard", icon: "dashboard" },
-    { href: "/admin/usuarios", label: "Usuarios", icon: "users" },
-    { href: "/admin/carga-masiva", label: "Carga masiva", icon: "upload" },
-    { href: "/admin/contratos", label: "Contratos", icon: "contracts" },
-    { href: "/admin/catalogo", label: "Catalogo", icon: "catalog" },
-    { href: "/admin/reportes", label: "Reportes", icon: "reports" },
-  ],
-};
+const usuarioNav: NavItem[] = [
+  { href: "/usuario", label: t("nav.items.home"), icon: "home" },
+  { href: "/usuario/crear-ticket", label: t("nav.items.createTicket"), icon: "plus" },
+  { href: "/usuario/tickets", label: t("nav.items.myTickets"), icon: "tickets" },
+];
+
+const tiOperationNav: NavItem[] = [
+  { href: "/ti", label: t("nav.items.inbox"), icon: "inbox" },
+  { href: "/ti/asignados", label: t("nav.items.assigned"), icon: "assigned" },
+  { href: "/ti/espera", label: t("nav.items.waiting"), icon: "wait" },
+];
+
+const adminManagementNav: NavItem[] = [
+  { href: "/admin", label: t("nav.items.dashboard"), icon: "dashboard" },
+  { href: "/admin/usuarios", label: t("nav.items.users"), icon: "users" },
+  { href: "/admin/carga-masiva", label: t("nav.items.bulkUpload"), icon: "upload" },
+  { href: "/admin/contratos", label: t("nav.items.contracts"), icon: "contracts" },
+  { href: "/admin/catalogo", label: t("nav.items.catalog"), icon: "catalog" },
+  { href: "/admin/reportes", label: t("nav.items.reports"), icon: "reports" },
+];
+
+function navSectionsForRole(role: Role): NavSection[] {
+  if (role === "ti_administrativo") {
+    return [
+      { title: t("nav.groups.operation"), items: tiOperationNav },
+      { title: t("nav.groups.administration"), items: adminManagementNav },
+    ];
+  }
+
+  if (role === "ti_operativo") {
+    return [{ title: t("nav.sections.ti_operativo"), items: tiOperationNav }];
+  }
+
+  return [{ title: t("nav.sections.usuario"), items: usuarioNav }];
+}
+
+function routeFallbackRole(pathname: string): Role | null {
+  if (pathname.startsWith("/admin")) return "ti_administrativo";
+  if (pathname.startsWith("/ti")) return "ti_operativo";
+  if (pathname.startsWith("/usuario")) return "usuario";
+  return null;
+}
 
 function isActivePath(pathname: string, href: string) {
   if (href === "/ti" || href === "/usuario" || href === "/admin") return pathname === href;
@@ -80,14 +93,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.localStorage.removeItem("stockgi-demo-user-id");
+    await csrfFetch("/api/auth/logout", { method: "POST" });
+    resetCsrfToken();
     router.push("/");
     router.refresh();
   }
+
   const { currentUser, contracts } = useAppState();
+  const effectiveRole = currentUser.id ? currentUser.role : routeFallbackRole(pathname) ?? currentUser.role;
   const contract = contracts.find((item) => item.id === currentUser.contractId);
-  const nav = navByRole[currentUser.role];
+  const navSections = navSectionsForRole(effectiveRole);
+  const flatNav = navSections.flatMap((section) => section.items);
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] lg:pl-[252px]">
@@ -95,47 +111,51 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="border-b border-white/10 px-[30px] py-6">
           <Image src="/stockgi-logo.png" alt="StockGI" width={158} height={54} className="h-auto w-[158px]" priority />
         </div>
-        <nav className="flex flex-1 flex-col px-[15px] py-5">
-          <p className="mb-4 px-[15px] text-[11px] font-bold uppercase tracking-[0.18em] text-white/38">{sectionLabel[currentUser.role]}</p>
-          <div className="grid gap-1.5">
-            {nav.map((item) => {
-              const active = isActivePath(pathname, item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`group flex h-[46px] items-center gap-2.5 rounded-[14px] px-[15px] text-[16px] font-medium transition-all duration-200 ${active ? "bg-white/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" : "text-white/64 hover:bg-white/8 hover:text-white/88"}`}
-                >
-                  <NavIcon name={item.icon} active={active} />
-                  <span className={active ? "font-semibold" : "font-medium"}>{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
+        <nav className="sidebar-scrollbar flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-3">
+          {navSections.map((section) => (
+            <div key={section.title ?? section.items[0]?.href}>
+              {section.title ? <p className="mb-2.5 px-3 text-[10px] font-bold uppercase tracking-[0.17em] text-white/38">{section.title}</p> : null}
+              <div className="grid gap-1">
+                {section.items.map((item) => {
+                  const active = isActivePath(pathname, item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`group flex h-[39px] items-center gap-2.5 rounded-[13px] px-3 text-[15px] font-medium transition-all duration-200 ${active ? "bg-white/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" : "text-white/64 hover:bg-white/8 hover:text-white/88"}`}
+                    >
+                      <NavIcon name={item.icon} active={active} />
+                      <span className={active ? "font-semibold" : "font-medium"}>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
-        <div className="border-t border-white/10 p-5">
+        <div className="border-t border-white/10 px-5 py-4">
           <p className="text-[13px] font-semibold">{currentUser.name}</p>
-          <p className="text-[12px] text-white/62">{roleLabel[currentUser.role]}</p>
-          <button onClick={logout} className="mt-3 text-[12px] font-semibold text-white/78 hover:text-white">Cerrar sesion</button>
+          <p className="text-[12px] text-white/62">{formatRole(effectiveRole)}</p>
+          <button onClick={logout} className="mt-2 text-[12px] font-semibold text-white/78 hover:text-white">{t("common.logout")}</button>
         </div>
       </aside>
 
       <header className="topbar-glass sticky top-0 z-20 border-b border-[var(--app-border-soft)] px-4 py-3 lg:px-6">
         <div className="flex items-center justify-between gap-3">
-          <Link href={roleHome[currentUser.role]} className="flex items-center gap-3 lg:hidden">
+          <Link href={roleHome[effectiveRole]} className="flex items-center gap-3 lg:hidden">
             <Image src="/stockgi-logo.png" alt="StockGI" width={104} height={36} className="h-auto w-[104px]" priority />
           </Link>
           <div className="hidden lg:block">
             <p className="text-[12px] font-semibold text-[var(--brand-secondary)]">{contract?.name ?? "StockGI"}</p>
-            <p className="text-[15px] font-semibold">StockGI Soporte TI</p>
+            <p className="text-[15px] font-semibold">{t("app.name")}</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="hidden rounded-full bg-[var(--brand-primary-soft)] px-3 py-1 text-[12px] font-semibold text-[var(--brand-primary)] sm:inline-flex">{roleLabel[currentUser.role]}</span>
-            <button onClick={logout} className="rounded-[10px] px-3 py-2 text-[12px] font-semibold text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] lg:hidden">Salir</button>
+            
+            <button onClick={logout} className="rounded-[10px] px-3 py-2 text-[12px] font-semibold text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] lg:hidden">{t("common.exit")}</button>
           </div>
         </div>
         <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:hidden">
-          {nav.map((item) => {
+          {flatNav.map((item) => {
             const active = isActivePath(pathname, item.href);
             return (
               <Link key={item.href} href={item.href} className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[12px] font-semibold ${active ? "bg-[var(--brand-primary)] text-white" : "bg-white text-[var(--brand-primary)]"}`}>
@@ -149,7 +169,3 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
-
-
-

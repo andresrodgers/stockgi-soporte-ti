@@ -1,6 +1,6 @@
 import { getTicketForUser } from "@/server/tickets";
-import { fail, ok } from "@/server/http";
-import { getSession } from "@/server/session";
+import { fail, ok, publicError } from "@/server/http";
+import { getSession, withSessionContext } from "@/server/session";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -8,9 +8,11 @@ export async function GET(_request: Request, context: RouteContext) {
   try {
     const session = await getSession();
     if (!session) return fail("No autenticado", 401);
-    const { id } = await context.params;
-    return ok({ ticket: await getTicketForUser(id, session.userId) });
+    return withSessionContext(session, async () => {
+      const { id } = await context.params;
+      return ok({ ticket: await getTicketForUser(id, session.userId) });
+    });
   } catch (error) {
-    return fail(error instanceof Error ? error.message : "No fue posible consultar el ticket", 404);
+    return publicError(error, "No fue posible consultar el ticket", 404);
   }
 }

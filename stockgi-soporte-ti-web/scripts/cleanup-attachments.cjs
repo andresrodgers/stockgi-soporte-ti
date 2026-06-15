@@ -9,6 +9,7 @@ async function main() {
   const root = process.env.UPLOAD_STORAGE_PATH || path.join(process.cwd(), ".stockgi-uploads");
   const client = new Client({ connectionString });
   await client.connect();
+  await client.query("select set_config('app.current_role', 'ti_administrativo', false)");
   const { rows } = await client.query("select id, storage_path from ticket_attachments where deleted_at is null and delete_after_at is not null and delete_after_at <= now()");
   for (const row of rows) {
     const absolutePath = path.join(root, row.storage_path);

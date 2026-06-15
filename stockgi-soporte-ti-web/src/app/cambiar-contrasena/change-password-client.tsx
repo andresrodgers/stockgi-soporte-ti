@@ -1,5 +1,7 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
+
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -34,7 +36,7 @@ export function ChangePasswordClient() {
       return;
     }
 
-    const response = await fetch("/api/auth/change-password", {
+    const response = await csrfFetch("/api/auth/change-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ currentPassword, newPassword }),

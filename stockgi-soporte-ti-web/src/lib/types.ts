@@ -1,4 +1,4 @@
-﻿export type Role = "usuario" | "ti_operativo" | "ti_administrativo";
+export type Role = "usuario" | "ti_operativo" | "ti_administrativo";
 
 export type TicketStatus =
   | "Nuevo"
@@ -11,6 +11,18 @@ export type TicketStatus =
   | "Cancelado";
 
 export type Priority = "Baja" | "Media" | "Alta" | "Critica";
+
+export type PaginationMeta = {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+};
+
+export type PaginatedResult<T> = {
+  items: T[];
+  pagination: PaginationMeta;
+};
 
 export type Contract = {
   id: string;
@@ -32,6 +44,12 @@ export type User = {
   location?: string;
   status: "Activo" | "Inactivo";
   mustChangePassword?: boolean;
+  locale?: string;
+};
+
+export type CreatedUserResult = {
+  user: User;
+  temporaryPasswordGenerated?: string;
 };
 
 export type TicketRequestType = {
@@ -93,6 +111,19 @@ export type Ticket = {
   comments: TicketComment[];
 };
 
+export type BulkImportEditableRow = {
+  contractName: string;
+  cedula: string;
+  name: string;
+  role: string;
+  email: string;
+  phone: string;
+  area: string;
+  position: string;
+  location: string;
+  status: string;
+};
+
 export type BulkImportRowResult = {
   rowNumber: number;
   status: "valid" | "error" | "imported";
@@ -100,6 +131,8 @@ export type BulkImportRowResult = {
   name?: string;
   contractName?: string;
   errorMessage?: string;
+  temporaryPasswordGenerated?: string;
+  values: BulkImportEditableRow;
 };
 
 export type BulkImportResult = {
@@ -114,6 +147,3 @@ export type CreateUserInput = Omit<User, "id"> & {
   temporaryPassword?: string;
   mustChangePassword?: boolean;
 };
-
-
-

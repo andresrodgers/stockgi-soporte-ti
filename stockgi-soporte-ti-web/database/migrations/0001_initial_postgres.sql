@@ -39,6 +39,7 @@ create table if not exists public.app_users (
   position text,
   location text,
   status text not null default 'active' check (status in ('active', 'inactive')),
+  locale varchar(10) not null default 'es-CO',
   must_change_password boolean not null default true,
   failed_login_attempts integer not null default 0,
   locked_until timestamptz,
