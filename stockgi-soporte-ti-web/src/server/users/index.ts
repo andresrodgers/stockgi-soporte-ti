@@ -1,5 +1,6 @@
 import type { Contract, CreateUserInput, CreatedUserResult, PaginatedResult, User } from "@/lib/types";
 import { listContracts } from "@/server/contracts";
+import { query } from "@/server/db";
 import { getRepository } from "@/server/repositories";
 import {
   normalizeCedula,
@@ -47,7 +48,7 @@ async function prepareUserInput(input: Partial<CreateUserInput>, currentUserId?:
   if (contract.status !== "Activo") throw new Error("No se puede asignar un usuario a un contrato inactivo");
 
   const cedula = normalizeCedula(typeof input.cedula === "string" ? input.cedula : existing?.cedula ?? "");
-  if (!cedula) throw new Error("La cédula es obligatoria");
+  if (!cedula) throw new Error("La c\u00e9dula es obligatoria");
   validateCedula(cedula);
 
   const name = normalizeText(typeof input.name === "string" ? input.name : existing?.name);
@@ -56,11 +57,11 @@ async function prepareUserInput(input: Partial<CreateUserInput>, currentUserId?:
 
   const roleRaw = typeof input.role === "string" ? input.role : existing?.role ?? "";
   const role = normalizeRoleInput(roleRaw);
-  if (!role) throw new Error("El rol no es válido");
+  if (!role) throw new Error("El rol no es v\u00e1lido");
 
   const statusRaw = typeof input.status === "string" ? input.status : existing?.status ?? "Activo";
   const status = normalizeStatusInput(statusRaw);
-  if (!status) throw new Error("El estado no es válido");
+  if (!status) throw new Error("El estado no es v\u00e1lido");
 
   const email = normalizeEmail(typeof input.email === "string" ? input.email : existing?.email);
   validateEmail(email);
@@ -69,7 +70,7 @@ async function prepareUserInput(input: Partial<CreateUserInput>, currentUserId?:
   validatePhone(phone);
 
   const duplicatedCedula = users.find((user) => user.id !== currentUserId && normalizeCedula(user.cedula) === cedula);
-  if (duplicatedCedula) throw new Error("Ya existe un usuario con esa cédula");
+  if (duplicatedCedula) throw new Error("Ya existe un usuario con esa c\u00e9dula");
 
   if (email) {
     const duplicatedEmail = users.find((user) => user.id !== currentUserId && normalizeEmail(user.email) === email);
@@ -114,4 +115,19 @@ export async function createUser(input: CreateUserInput): Promise<CreatedUserRes
 export async function updateUser(userId: string, updates: Partial<User>) {
   const prepared = await prepareUserInput(updates, userId);
   return getRepository().updateUser(userId, prepared);
+}
+
+export async function resetUserPasswordByAdmin(actorUserId: string, targetUserId: string): Promise<CreatedUserResult> {
+  if (actorUserId === targetUserId) throw new Error("No puedes restablecer tu propia contraseña desde este flujo");
+  const result = await getRepository().resetUserPassword(targetUserId);
+  await query(`update app_sessions set revoked_at = now() where user_id = $1 and revoked_at is null`, [targetUserId]);
+  await query(
+    `insert into session_events(user_id, event_type, metadata) values ($1, 'password_reset_by_admin', $2)`,
+    [targetUserId, JSON.stringify({ actorUserId })],
+  );
+  return result;
+}
+
+export async function deleteUser(userId: string) {
+  return getRepository().deleteUser(userId);
 }

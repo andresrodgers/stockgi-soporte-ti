@@ -31,6 +31,8 @@ type AppState = {
   closeTicket: (ticketId: string, solution: string) => Promise<Ticket>;
   createUser: (input: CreateUserInput) => Promise<CreatedUserResult>;
   updateUser: (userId: string, updates: Partial<User>) => Promise<User>;
+  resetUserPassword: (userId: string) => Promise<CreatedUserResult>;
+  deleteUser: (userId: string) => Promise<void>;
   createContract: (input: CreateContractInput) => Promise<Contract>;
   updateContract: (contractId: string, updates: Partial<Contract>) => Promise<Contract>;
 };
@@ -165,6 +167,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       const { user } = await apiFetch<{ user: User }>(`/api/admin/users/${userId}`, { method: "PATCH", body: JSON.stringify(updates) });
       setUsers((items) => items.map((item) => (item.id === userId ? user : item)));
       return user;
+    },
+    async resetUserPassword(userId) {
+      const result = await apiFetch<CreatedUserResult>(`/api/admin/users/${userId}/reset-password`, { method: "POST" });
+      setUsers((items) => items.map((item) => (item.id === userId ? result.user : item)));
+      return result;
+    },
+    async deleteUser(userId) {
+      await apiFetch<{ deleted: boolean }>(`/api/admin/users/${userId}`, { method: "DELETE" });
+      setUsers((items) => items.filter((item) => item.id !== userId));
     },
     async createContract(input) {
       const { contract } = await apiFetch<{ contract: Contract }>("/api/admin/contracts", { method: "POST", body: JSON.stringify(input) });

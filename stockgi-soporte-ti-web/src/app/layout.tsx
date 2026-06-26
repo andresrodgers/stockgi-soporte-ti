@@ -5,6 +5,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "StockGI Soporte TI",
   description: "Mesa de ayuda TI privada para StockGI",
+  icons: {
+    icon: "/stockgi-logo.png",
+    apple: "/stockgi-logo.png",
+  },
 };
 
 export default function RootLayout({

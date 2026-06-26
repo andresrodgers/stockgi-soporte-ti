@@ -11,7 +11,7 @@ const PAGE_SIZE = 10;
 const initialPagination: PaginationMeta = { page: 1, pageSize: PAGE_SIZE, totalItems: 0, totalPages: 1 };
 
 export default function UsuariosPage() {
-  const { contracts, createUser, updateUser } = useAppState();
+  const { contracts, createUser, updateUser, resetUserPassword, deleteUser } = useAppState();
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -22,6 +22,15 @@ export default function UsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [resetTarget, setResetTarget] = useState<User | null>(null);
+  const [resetConfirmation, setResetConfirmation] = useState("");
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetting, setResetting] = useState(false);
+  const [resetResult, setResetResult] = useState<CreatedUserResult | null>(null);
 
   const loadUsers = useCallback(async (pageNumber: number) => {
     setLoading(true);
@@ -70,6 +79,63 @@ export default function UsuariosPage() {
     await loadUsers(targetPage);
   }
 
+  function openDelete(user: User) {
+    setDeleteTarget(user);
+    setDeleteConfirmation("");
+    setDeleteError(null);
+  }
+
+  function openReset(user: User) {
+    setResetTarget(user);
+    setResetConfirmation("");
+    setResetError(null);
+    setResetResult(null);
+  }
+
+  async function confirmResetPassword() {
+    if (!resetTarget) return;
+    if (resetConfirmation.trim() !== resetTarget.cedula) {
+      setResetError("Escribe la cédula exacta para confirmar el restablecimiento.");
+      return;
+    }
+
+    setResetting(true);
+    setResetError(null);
+    try {
+      const result = await resetUserPassword(resetTarget.id);
+      setResetResult(result);
+      await refreshUsersAfterMutation(page);
+    } catch (resetRequestError) {
+      setResetError(resetRequestError instanceof Error ? resetRequestError.message : "No fue posible restablecer la contraseña");
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    if (deleteConfirmation.trim() !== deleteTarget.cedula) {
+      setDeleteError("Escribe la c\u00e9dula exacta para confirmar la eliminaci\u00f3n.");
+      return;
+    }
+
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteUser(deleteTarget.id);
+      const nextTotal = Math.max(0, pagination.totalItems - 1);
+      const nextTotalPages = Math.max(1, Math.ceil(nextTotal / PAGE_SIZE));
+      const targetPage = Math.min(page, nextTotalPages);
+      await refreshUsersAfterMutation(targetPage);
+      setDeleteTarget(null);
+      setDeleteConfirmation("");
+    } catch (deleteRequestError) {
+      setDeleteError(deleteRequestError instanceof Error ? deleteRequestError.message : "No fue posible eliminar el usuario");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError(null);
@@ -113,7 +179,7 @@ export default function UsuariosPage() {
   return (
     <AppShell>
       <div className="grid gap-[18px]">
-        <PageHeader eyebrow="Administración" title="Usuarios" description="Crea usuarios, cambia contratos, ajusta roles y activa o inactiva accesos." />
+        <PageHeader eyebrow={"Administraci\u00f3n"} title="Usuarios" description="Crea usuarios, cambia contratos, ajusta roles y activa o inactiva accesos." />
         <Card>
           <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -129,7 +195,7 @@ export default function UsuariosPage() {
               <div className="overflow-x-auto">
                 <table className="min-w-[880px] w-full text-left text-[13px]">
                   <thead className="text-[11px] uppercase tracking-[0.08em] text-[var(--brand-secondary)]">
-                    <tr><th className="px-5 py-3">Nombre</th><th className="px-5 py-3">Cédula</th><th className="px-5 py-3">Contrato</th><th className="px-5 py-3">Rol</th><th className="px-5 py-3">Estado</th><th className="px-5 py-3">Acción</th></tr>
+                    <tr><th className="px-5 py-3">Nombre</th><th className="px-5 py-3">{"C\u00e9dula"}</th><th className="px-5 py-3">Contrato</th><th className="px-5 py-3">Rol</th><th className="px-5 py-3">Estado</th><th className="px-5 py-3">{"Acci\u00f3n"}</th></tr>
                   </thead>
                   <tbody>
                     {tableUsers.map((user) => (
@@ -139,7 +205,13 @@ export default function UsuariosPage() {
                         <td className="border-t border-[var(--app-border-soft)] px-5 py-3">{contracts.find((contract) => contract.id === user.contractId)?.name}</td>
                         <td className="border-t border-[var(--app-border-soft)] px-5 py-3">{user.role}</td>
                         <td className="border-t border-[var(--app-border-soft)] px-5 py-3">{user.status}</td>
-                        <td className="border-t border-[var(--app-border-soft)] px-5 py-3"><button onClick={() => openEdit(user)} className="h-8 rounded-[10px] bg-[var(--app-muted)] px-3 text-[12px] font-semibold text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)]">Editar</button></td>
+                        <td className="border-t border-[var(--app-border-soft)] px-5 py-3">
+                          <div className="flex flex-wrap gap-2">
+                            <button onClick={() => openEdit(user)} className="h-8 rounded-[10px] bg-[var(--app-muted)] px-3 text-[12px] font-semibold text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)]">Editar</button>
+                            <button onClick={() => openReset(user)} className="h-8 rounded-[10px] bg-[var(--brand-primary-soft)] px-3 text-[12px] font-semibold text-[var(--brand-primary)] hover:bg-[var(--app-muted)]">Restablecer contraseña</button>
+                            <button onClick={() => openDelete(user)} className="h-8 rounded-[10px] bg-[#fae4df] px-3 text-[12px] font-semibold text-[#b63c2a] hover:bg-[#f6d3cb]">Eliminar</button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -158,7 +230,7 @@ export default function UsuariosPage() {
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--brand-secondary)]">{editingUser ? "Editar usuario" : "Nuevo usuario"}</p>
                 <h2 id="user-modal-title" className="mt-1 text-[20px] font-semibold">{editingUser ? "Actualizar usuario" : "Crear usuario"}</h2>
-                <p className="mt-1 text-[13px] text-[var(--brand-secondary)]">{editingUser ? "Cambia contrato, rol, estado o datos del usuario." : "Completa los datos mínimos para entregar acceso al portal."}</p>
+                <p className="mt-1 text-[13px] text-[var(--brand-secondary)]">{editingUser ? "Cambia contrato, rol, estado o datos del usuario." : "Completa los datos m\u00ednimos para entregar acceso al portal."}</p>
               </div>
               <button onClick={() => setOpen(false)} className="grid size-9 place-items-center rounded-[11px] bg-[var(--app-muted)] text-[18px] font-semibold text-[var(--brand-secondary)] hover:bg-[var(--brand-primary-soft)]">x</button>
             </div>
@@ -182,7 +254,7 @@ export default function UsuariosPage() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Cédula">
+                <Field label={"C\u00e9dula"}>
                   <input name="cedula" className={inputClass} defaultValue={editingUser?.cedula} placeholder="Ej. 10101010" required />
                 </Field>
                 <Field label="Nombre completo">
@@ -197,7 +269,7 @@ export default function UsuariosPage() {
                     <option>Inactivo</option>
                   </select>
                 </Field>
-                {!editingUser ? <div className="rounded-[13px] bg-[var(--app-muted)] px-4 py-3 text-[12px] text-[var(--brand-secondary)]">La contraseña temporal se genera automáticamente y se mostrará una sola vez al guardar.</div> : <div />}
+                {!editingUser ? <div className="rounded-[13px] bg-[var(--app-muted)] px-4 py-3 text-[12px] text-[var(--brand-secondary)]">{"La contrase\u00f1a temporal ser\u00e1 la misma c\u00e9dula y se mostrar\u00e1 una sola vez al guardar."}</div> : <div />}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -210,8 +282,8 @@ export default function UsuariosPage() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
-                <Field label="Área opcional">
-                  <input name="area" className={inputClass} defaultValue={editingUser?.area} placeholder="Operación" />
+                <Field label={"\u00c1rea opcional"}>
+                  <input name="area" className={inputClass} defaultValue={editingUser?.area} placeholder={"Operaci\u00f3n"} />
                 </Field>
                 <Field label="Cargo opcional">
                   <input name="position" className={inputClass} defaultValue={editingUser?.position} placeholder="Analista" />
@@ -226,7 +298,7 @@ export default function UsuariosPage() {
               {createdResult?.temporaryPasswordGenerated ? (
                 <div className="rounded-[13px] bg-[var(--brand-primary-soft)] p-4 text-[13px] text-[var(--brand-primary)]">
                   <p className="font-semibold">Usuario creado correctamente.</p>
-                  <p className="mt-1">Contraseña temporal generada:</p>
+                  <p className="mt-1">{"Contrase\u00f1a temporal:"}</p>
                   <p className="mt-2 rounded-[10px] bg-white px-3 py-2 font-mono text-[14px] font-semibold text-[var(--foreground)]">{createdResult.temporaryPasswordGenerated}</p>
                   <p className="mt-2 text-[12px]">Debes compartirla al usuario. Solo se muestra en este momento.</p>
                 </div>
@@ -237,6 +309,74 @@ export default function UsuariosPage() {
                 <button className="h-11 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)]">Guardar usuario</button>
               </div>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {resetTarget ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/20 px-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="reset-user-password-title">
+          <div className="w-full max-w-[540px] rounded-[20px] bg-white card-shadow">
+            <div className="border-b border-[var(--app-border-soft)] px-6 py-5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--brand-secondary)]">{"Confirmación requerida"}</p>
+              <h2 id="reset-user-password-title" className="mt-1 text-[20px] font-semibold">{"Restablecer contraseña"}</h2>
+              <p className="mt-2 text-[13px] text-[var(--brand-secondary)]">
+                {"La contraseña temporal volverá a ser la cédula del usuario. El usuario deberá cambiarla en el siguiente ingreso."}
+              </p>
+            </div>
+            <div className="grid gap-4 px-6 py-5">
+              <div className="rounded-[13px] bg-[var(--app-muted)] px-4 py-3 text-[13px]">
+                <p className="font-semibold text-[var(--foreground)]">{resetTarget.name}</p>
+                <p className="mt-1 text-[var(--brand-secondary)]">{"Cédula"}: {resetTarget.cedula}</p>
+              </div>
+              {!resetResult ? (
+                <Field label={`Escribe la cédula ${resetTarget.cedula} para confirmar`}>
+                  <input className={inputClass} value={resetConfirmation} onChange={(event) => setResetConfirmation(event.target.value)} placeholder={resetTarget.cedula} />
+                </Field>
+              ) : null}
+              {resetError ? <p className="rounded-[13px] bg-[#fae4df] p-3 text-[13px] font-semibold text-[#b63c2a]">{resetError}</p> : null}
+              {resetResult?.temporaryPasswordGenerated ? (
+                <div className="rounded-[13px] bg-[var(--brand-primary-soft)] p-4 text-[13px] text-[var(--brand-primary)]">
+                  <p className="font-semibold">{"Contraseña restablecida correctamente."}</p>
+                  <p className="mt-1">{"Contraseña temporal:"}</p>
+                  <p className="mt-2 rounded-[10px] bg-white px-3 py-2 font-mono text-[14px] font-semibold text-[var(--foreground)]">{resetResult.temporaryPasswordGenerated}</p>
+                  <p className="mt-2 text-[12px]">{"Compártela al usuario por un canal seguro. Solo se muestra en este momento."}</p>
+                </div>
+              ) : null}
+              <div className="flex flex-col-reverse gap-2 border-t border-[var(--app-border-soft)] pt-4 sm:flex-row sm:justify-end">
+                <button type="button" onClick={() => setResetTarget(null)} className="h-11 rounded-[14px] bg-white px-5 text-[13px] font-semibold text-[var(--brand-primary)] shadow-sm ring-1 ring-[var(--app-border)]">{resetResult ? "Cerrar" : "Cancelar"}</button>
+                {!resetResult ? (
+                  <button type="button" onClick={confirmResetPassword} disabled={resetting || resetConfirmation.trim() !== resetTarget.cedula} className="h-11 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-50">{resetting ? "Restableciendo..." : "Restablecer contraseña"}</button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {deleteTarget ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/20 px-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="delete-user-title">
+          <div className="w-full max-w-[520px] rounded-[20px] bg-white card-shadow">
+            <div className="border-b border-[var(--app-border-soft)] px-6 py-5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#b63c2a]">{"Confirmaci\u00f3n requerida"}</p>
+              <h2 id="delete-user-title" className="mt-1 text-[20px] font-semibold">Eliminar usuario</h2>
+              <p className="mt-2 text-[13px] text-[var(--brand-secondary)]">
+                {"Esta acci\u00f3n elimina el usuario si no tiene historial asociado. Si ya tiene tickets, comentarios o adjuntos, el sistema pedir\u00e1 inactivarlo para conservar trazabilidad."}
+              </p>
+            </div>
+            <div className="grid gap-4 px-6 py-5">
+              <div className="rounded-[13px] bg-[var(--app-muted)] px-4 py-3 text-[13px]">
+                <p className="font-semibold text-[var(--foreground)]">{deleteTarget.name}</p>
+                <p className="mt-1 text-[var(--brand-secondary)]">{"C\u00e9dula"}: {deleteTarget.cedula}</p>
+              </div>
+              <Field label={`Escribe la c\u00e9dula ${deleteTarget.cedula} para confirmar`}>
+                <input className={inputClass} value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} placeholder={deleteTarget.cedula} />
+              </Field>
+              {deleteError ? <p className="rounded-[13px] bg-[#fae4df] p-3 text-[13px] font-semibold text-[#b63c2a]">{deleteError}</p> : null}
+              <div className="flex flex-col-reverse gap-2 border-t border-[var(--app-border-soft)] pt-4 sm:flex-row sm:justify-end">
+                <button type="button" onClick={() => setDeleteTarget(null)} className="h-11 rounded-[14px] bg-white px-5 text-[13px] font-semibold text-[var(--brand-primary)] shadow-sm ring-1 ring-[var(--app-border)]">Cancelar</button>
+                <button type="button" onClick={confirmDelete} disabled={deleting || deleteConfirmation.trim() !== deleteTarget.cedula} className="h-11 rounded-[14px] bg-[#b63c2a] px-5 text-[13px] font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50">{deleting ? "Eliminando..." : "Eliminar usuario"}</button>
+              </div>
+            </div>
           </div>
         </div>
       ) : null}

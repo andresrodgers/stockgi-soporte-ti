@@ -36,6 +36,8 @@ export interface DataRepository {
   listUsersPage(options: UserPageOptions): Promise<PaginatedResult<User>>;
   createUser(input: CreateUserRecord): Promise<CreatedUserResult>;
   updateUser(userId: string, updates: Partial<User>): Promise<User>;
+  resetUserPassword(userId: string): Promise<CreatedUserResult>;
+  deleteUser(userId: string): Promise<void>;
   listCategories(): Promise<TicketCategory[]>;
   listTickets(): Promise<Ticket[]>;
   listTicketsPage(options: TicketPageOptions): Promise<PaginatedResult<Ticket>>;

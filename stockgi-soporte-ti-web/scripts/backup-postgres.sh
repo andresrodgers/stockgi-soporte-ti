@@ -1,4 +1,4 @@
-﻿#!/bin/sh
+#!/bin/sh
 set -eu
 STAMP="$(date +%Y%m%d-%H%M%S)"
 FILE="/backups/stockgi_soporte_ti_${STAMP}.dump"

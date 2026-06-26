@@ -1,6 +1,6 @@
 import type { BulkImportEditableRow, BulkImportResult } from "@/lib/types";
 import { assertRole } from "@/server/auth";
-import { importCorrectedUsers, importUsersFromCsv, validateCsvFileEnvelope } from "@/server/bulk-import";
+import { importCorrectedUsers, importUsersFromCsv, readCsvFileText } from "@/server/bulk-import";
 import { validateCsrfToken } from "@/server/csrf";
 import { fail } from "@/server/http";
 import { runIdempotent } from "@/server/idempotency";
@@ -27,8 +27,7 @@ export async function POST(request: Request) {
         const formData = await request.formData();
         const file = formData.get("file");
         if (!(file instanceof File)) throw new Error("Archivo CSV obligatorio");
-        validateCsvFileEnvelope(file);
-        const result: BulkImportResult = await importUsersFromCsv(await file.text());
+        const result: BulkImportResult = await importUsersFromCsv(await readCsvFileText(file));
         return { data: { result } };
       });
     });

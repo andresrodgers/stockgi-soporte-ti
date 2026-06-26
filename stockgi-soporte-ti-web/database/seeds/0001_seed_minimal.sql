@@ -1,7 +1,8 @@
 -- Seed mínimo producción/local. Cambiar contraseña temporal en primer login.
+-- Contraseña temporal inicial del admin: misma cédula del usuario.
 
 insert into public.contracts (id, name, client_name, internal_code, status)
-values ('00000000-0000-4000-8000-000000000001', 'StockGI Administración', 'StockGI', 'STOCKGI-ADMIN', 'active')
+values ('00000000-0000-4000-8000-000000000001', 'StockGI', 'StockGI', 'STOCKGI', 'active')
 on conflict (id) do update set name = excluded.name, client_name = excluded.client_name, internal_code = excluded.internal_code, status = excluded.status;
 
 insert into public.app_users (
@@ -11,9 +12,9 @@ values (
   '00000000-0000-4000-8000-000000000101',
   '00000000-0000-4000-8000-000000000001',
   '1075297653',
-  'Administrador StockGI',
+  'Andres Rodgers',
   'ti_administrativo',
-  '$2b$12$8Abirdrb4EGmNKAR4IRbyufIUhBGd/04r2hGvXz.Kwgl5mMqnmJ72',
+  '$2b$12$js.rGz0DTskaRhEjBUDhNO8I5FrvEGawW.aBdmlTlYN1tvLsj3Zei',
   'admin@stockgi.com',
   'TI',
   'Administrador TI',

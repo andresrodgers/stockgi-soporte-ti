@@ -1,3 +1,4 @@
+import { TextDecoder } from "node:util";
 import type { BulkImportEditableRow, BulkImportResult, BulkImportRowResult } from "@/lib/types";
 import { listContracts } from "@/server/contracts";
 import { createUser, listUsers } from "@/server/users";
@@ -34,6 +35,20 @@ type CsvRow = Record<string, string>;
 export function validateCsvFileEnvelope(file: File) {
   if (!file.name.toLowerCase().endsWith(".csv")) throw new Error("Solo se acepta archivo .csv");
   if (file.size > maxCsvBytes) throw new Error("El archivo CSV supera el peso máximo permitido");
+}
+
+function decodeCsvBuffer(buffer: Buffer) {
+  const utf8Decoder = new TextDecoder("utf-8", { fatal: true });
+  try {
+    return utf8Decoder.decode(buffer);
+  } catch {
+    return new TextDecoder("windows-1252").decode(buffer);
+  }
+}
+
+export async function readCsvFileText(file: File) {
+  validateCsvFileEnvelope(file);
+  return decodeCsvBuffer(Buffer.from(await file.arrayBuffer()));
 }
 
 function normalize(value: unknown) {

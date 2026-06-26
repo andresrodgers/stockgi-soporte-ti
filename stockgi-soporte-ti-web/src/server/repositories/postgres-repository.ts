@@ -1,5 +1,5 @@
 import type { Contract, CreateUserInput, CreatedUserResult, PaginatedResult, Priority, Role, Ticket, TicketAttachment, TicketCategory, TicketComment, TicketStatus, User } from "@/lib/types";
-import { hashPassword, generateTemporaryPassword } from "@/server/auth/password";
+import { hashPassword } from "@/server/auth/password";
 import { query } from "@/server/db";
 import type { CreateContractRecord, CreateTicketRecord, DataRepository, TicketPageOptions, UpdateTicketRecord, UserPageOptions } from "./types";
 
@@ -222,7 +222,7 @@ export const postgresRepository: DataRepository = {
     };
   },
   async createUser(input: CreateUserInput): Promise<CreatedUserResult> {
-    const temporaryPasswordGenerated = input.temporaryPassword?.trim() || generateTemporaryPassword();
+    const temporaryPasswordGenerated = input.cedula.trim();
     const passwordHash = await hashPassword(temporaryPasswordGenerated);
     const { rows } = await query<DbUser>(`
       insert into app_users(contract_id, document_id, full_name, role, password_hash, email, phone, area, position, location, status, must_change_password, locale)
@@ -240,6 +240,44 @@ export const postgresRepository: DataRepository = {
       where id=$1 returning id, contract_id, document_id, full_name, role, email, phone, area, position, location, status, must_change_password, locale
     `, [userId, next.contractId, next.cedula, next.name, next.role, next.email || null, next.phone || null, next.area || null, next.position || null, next.location || null, next.status === "Activo" ? "active" : "inactive", next.mustChangePassword ?? false, next.locale || "es-CO"]);
     return userFromDb(rows[0]);
+  },
+  async resetUserPassword(userId) {
+    const { rows: userRows } = await query<DbUser>(`
+      select id, contract_id, document_id, full_name, role, email, phone, area, position, location, status, must_change_password, locale
+      from app_users
+      where id=$1
+      limit 1
+    `, [userId]);
+    const user = userRows[0];
+    if (!user) throw new Error("Usuario no encontrado");
+    const temporaryPasswordGenerated = user.document_id.trim();
+    const passwordHash = await hashPassword(temporaryPasswordGenerated);
+    const { rows } = await query<DbUser>(`
+      update app_users
+      set password_hash=$2,
+          must_change_password=true,
+          failed_login_attempts=0,
+          locked_until=null
+      where id=$1
+      returning id, contract_id, document_id, full_name, role, email, phone, area, position, location, status, must_change_password, locale
+    `, [userId, passwordHash]);
+    return { user: userFromDb(rows[0]), temporaryPasswordGenerated };
+  },
+  async deleteUser(userId) {
+    const dependencies = await query<{ tickets: string | number; comments: string | number; attachments: string | number }>(`
+      select
+        (select count(*) from tickets where requester_id=$1 or assigned_to_id=$1 or closed_by_id=$1) as tickets,
+        (select count(*) from ticket_comments where author_id=$1) as comments,
+        (select count(*) from ticket_attachments where uploaded_by_id=$1) as attachments
+    `, [userId]);
+    const counts = dependencies.rows[0];
+    const totalDependencies = Number(counts?.tickets || 0) + Number(counts?.comments || 0) + Number(counts?.attachments || 0);
+    if (totalDependencies > 0) {
+      throw new Error("Este usuario tiene historial asociado. Inactívalo para conservar la trazabilidad de tickets.");
+    }
+
+    const result = await query(`delete from app_users where id=$1`, [userId]);
+    if (!result.rowCount) throw new Error("Usuario no encontrado");
   },
   async listCategories() {
     const categories = await query<DbCategory>(`select id, name, description from ticket_categories where status='active' order by sort_order asc, name asc`);
