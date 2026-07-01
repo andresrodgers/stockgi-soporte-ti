@@ -100,8 +100,11 @@ export type Ticket = {
   priority: Priority;
   status: TicketStatus;
   requesterId: string;
+  requesterName?: string;
+  requesterCedula?: string;
   contractId: string;
   assigneeId?: string;
+  assigneeName?: string;
   createdAt: string;
   updatedAt: string;
   dueAt: string;

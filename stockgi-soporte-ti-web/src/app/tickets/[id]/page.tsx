@@ -128,6 +128,8 @@ export default function TicketDetailPage() {
   const activeTicket = ticket;
   const requester = users.find((user) => user.id === activeTicket.requesterId);
   const assignee = users.find((user) => user.id === activeTicket.assigneeId);
+  const requesterName = requester?.name ?? activeTicket.requesterName ?? "Solicitante no disponible";
+  const assigneeName = assignee?.name ?? activeTicket.assigneeName ?? t("common.notAssigned");
   const contract = contracts.find((item) => item.id === activeTicket.contractId);
   const category = categories.find((item) => item.id === activeTicket.categoryId);
   const requestType = category?.requestTypes.find((item) => item.id === activeTicket.requestTypeId);
@@ -256,14 +258,14 @@ export default function TicketDetailPage() {
             <Card className="p-5">
               <h2 className="text-[15px] font-semibold">{t("tickets.data")}</h2>
               <dl className="mt-4 grid gap-3 text-[13px]">
-                <div><dt className="text-[var(--brand-secondary)]">{t("tickets.requester")}</dt><dd className="font-semibold">{requester?.name}</dd></div>
+                <div><dt className="text-[var(--brand-secondary)]">{t("tickets.requester")}</dt><dd className="font-semibold">{requesterName}</dd></div>
                 <div><dt className="text-[var(--brand-secondary)]">{t("tickets.contract")}</dt><dd className="font-semibold">{contract?.name}</dd></div>
-                <div><dt className="text-[var(--brand-secondary)]">{t("tickets.assignee")}</dt><dd className="font-semibold">{assignee?.name ?? t("common.notAssigned")}</dd></div>
+                <div><dt className="text-[var(--brand-secondary)]">{t("tickets.assignee")}</dt><dd className="font-semibold">{assigneeName}</dd></div>
                 <div><dt className="text-[var(--brand-secondary)]">{t("tickets.priority")}</dt><dd><Badge tone={priorityTone(activeTicket.priority)}>{formatPriority(activeTicket.priority)}</Badge></dd></div>
                 <div><dt className="text-[var(--brand-secondary)]">{t("tickets.slaDue")}</dt><dd className="font-semibold">{activeTicket.dueAt}</dd></div>
               </dl>
               {canTakeTicket ? <button onClick={takeTicket} className="mt-4 h-11 w-full rounded-[14px] bg-[var(--brand-primary)] text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)]">{t("tickets.take")}</button> : null}
-              {activeTicket.assigneeId ? <p className="mt-4 rounded-[13px] bg-[var(--brand-primary-soft)] p-3 text-[12px] font-semibold text-[var(--brand-primary)]">{t("tickets.alreadyAssigned", { name: assignee?.name ?? "un tecnico" })}</p> : null}
+              {activeTicket.assigneeId ? <p className="mt-4 rounded-[13px] bg-[var(--brand-primary-soft)] p-3 text-[12px] font-semibold text-[var(--brand-primary)]">{t("tickets.alreadyAssigned", { name: assigneeName })}</p> : null}
             </Card>
           </aside>
         </div>

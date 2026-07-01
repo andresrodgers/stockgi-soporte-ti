@@ -7,10 +7,21 @@ type DbContract = { id: string; name: string; client_name: string | null; status
 type DbUser = { id: string; contract_id: string; document_id: string; full_name: string; role: Role; email: string | null; phone: string | null; area: string | null; position: string | null; location: string | null; status: "active" | "inactive"; must_change_password: boolean; locale: string | null };
 type DbCategory = { id: string; name: string; description: string | null };
 type DbRequestType = { id: string; category_id: string; name: string; default_priority: "baja" | "media" | "alta" | "critica"; response_sla_minutes: number; resolution_sla_minutes: number; attachment_rule: "not_required" | "recommended" | "required" };
-type DbTicket = { id: string; ticket_number: string; contract_id: string; requester_id: string; category_id: string; request_type_id: string; subject: string; description: string; status: string; priority: string; resolution_due_at: Date | string; assigned_to_id: string | null; solution: string | null; internal_notes: string | null; created_at: Date | string; updated_at: Date | string };
+type DbTicket = { id: string; ticket_number: string; contract_id: string; requester_id: string; requester_name?: string | null; requester_document_id?: string | null; category_id: string; request_type_id: string; subject: string; description: string; status: string; priority: string; resolution_due_at: Date | string; assigned_to_id: string | null; assignee_name?: string | null; solution: string | null; internal_notes: string | null; created_at: Date | string; updated_at: Date | string };
 type DbComment = { id: string; ticket_id: string; author_id: string; author_name: string; author_role: Role; body: string; comment_type: string; created_at: Date | string };
 type DbAttachment = { id: string; ticket_id: string; storage_path: string; original_filename: string; mime_type: string; original_size_bytes: string | number; stored_size_bytes: string | number; compression_status: TicketAttachment["compressionStatus"]; retention_days: number; delete_after_at: Date | string | null; deleted_at: Date | string | null };
 type CountRow = { total: string | number };
+
+const ticketSelectSql = `
+  select
+    t.*,
+    requester.full_name as requester_name,
+    requester.document_id as requester_document_id,
+    assignee.full_name as assignee_name
+  from tickets t
+  left join app_users requester on requester.id = t.requester_id
+  left join app_users assignee on assignee.id = t.assigned_to_id
+`;
 
 const priorityFromDb: Record<string, Priority> = { baja: "Baja", media: "Media", alta: "Alta", critica: "Critica" };
 const statusToDb: Record<TicketStatus, string> = { Nuevo: "nuevo", Asignado: "asignado", "En proceso": "en_proceso", "Esperando informacion": "esperando_informacion", Resuelto: "resuelto", Cerrado: "cerrado", Reabierto: "reabierto", Cancelado: "cancelado" };
@@ -117,8 +128,11 @@ async function ticketFromDb(row: DbTicket, comments?: TicketComment[], attachmen
     priority: priorityFromDb[row.priority],
     status: statusFromDb[row.status],
     requesterId: row.requester_id,
+    requesterName: row.requester_name || undefined,
+    requesterCedula: row.requester_document_id || undefined,
     contractId: row.contract_id,
     assigneeId: row.assigned_to_id || undefined,
+    assigneeName: row.assignee_name || undefined,
     createdAt: toIsoLabel(row.created_at) || "",
     updatedAt: toIsoLabel(row.updated_at) || "",
     dueAt: toIsoLabel(row.resolution_due_at) || "",
@@ -146,29 +160,29 @@ function buildTicketWhere(options: TicketPageOptions) {
   };
 
   if (options.role === "usuario") {
-    clauses.push(`requester_id = ${pushValue(options.userId)}`);
+    clauses.push(`t.requester_id = ${pushValue(options.userId)}`);
   } else if (options.role === "ti_operativo") {
     if (options.scope === "assigned") {
-      clauses.push(`assigned_to_id = ${pushValue(options.userId)}`);
+      clauses.push(`t.assigned_to_id = ${pushValue(options.userId)}`);
     } else if (options.scope === "waiting") {
-      clauses.push(`assigned_to_id = ${pushValue(options.userId)}`);
-      clauses.push(`status = ${pushValue("esperando_informacion")}`);
+      clauses.push(`t.assigned_to_id = ${pushValue(options.userId)}`);
+      clauses.push(`t.status = ${pushValue("esperando_informacion")}`);
     } else {
-      clauses.push(`(assigned_to_id is null or assigned_to_id = ${pushValue(options.userId)})`);
-      clauses.push(`status not in ('cerrado', 'cancelado')`);
+      clauses.push(`(t.assigned_to_id is null or t.assigned_to_id = ${pushValue(options.userId)})`);
+      clauses.push(`t.status not in ('cerrado', 'cancelado')`);
     }
   } else {
     if (options.scope === "assigned") {
-      clauses.push(`assigned_to_id = ${pushValue(options.userId)}`);
+      clauses.push(`t.assigned_to_id = ${pushValue(options.userId)}`);
     } else if (options.scope === "waiting") {
-      clauses.push(`status = ${pushValue("esperando_informacion")}`);
+      clauses.push(`t.status = ${pushValue("esperando_informacion")}`);
     } else {
-      clauses.push(`status not in ('cerrado', 'cancelado')`);
+      clauses.push(`t.status not in ('cerrado', 'cancelado')`);
     }
   }
 
   if (options.status) {
-    clauses.push(`status = ${pushValue(statusToDb[options.status])}`);
+    clauses.push(`t.status = ${pushValue(statusToDb[options.status])}`);
   }
 
   return {
@@ -177,7 +191,7 @@ function buildTicketWhere(options: TicketPageOptions) {
   };
 }
 async function getTicket(ticketId: string) {
-  const { rows } = await query<DbTicket>(`select * from tickets where id = $1`, [ticketId]);
+  const { rows } = await query<DbTicket>(`${ticketSelectSql} where t.id = $1`, [ticketId]);
   if (!rows[0]) throw new Error("Ticket no encontrado");
   const comments = await listComments([ticketId]);
   const attachments = await listAttachments([ticketId]);
@@ -304,18 +318,18 @@ export const postgresRepository: DataRepository = {
     });
   },
   async listTickets() {
-    const { rows } = await query<DbTicket>(`select * from tickets order by created_at desc`);
+    const { rows } = await query<DbTicket>(`${ticketSelectSql} order by t.created_at desc`);
     return mapTickets(rows);
   },
   async listTicketsPage(options: TicketPageOptions): Promise<PaginatedResult<Ticket>> {
     const { page, pageSize, offset } = normalizePagination(options.page, options.pageSize);
     const { whereSql, values } = buildTicketWhere(options);
-    const totalResult = await query<CountRow>(`select count(*) as total from tickets ${whereSql}`, values);
+    const totalResult = await query<CountRow>(`select count(*) as total from tickets t ${whereSql}`, values);
     const totalItems = Number(totalResult.rows[0]?.total || 0);
     const rowsResult = await query<DbTicket>(`
-      select * from tickets
+      ${ticketSelectSql}
       ${whereSql}
-      order by created_at desc
+      order by t.created_at desc
       limit $${values.length + 1} offset $${values.length + 2}
     `, [...values, pageSize, offset]);
 

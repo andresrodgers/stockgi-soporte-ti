@@ -33,7 +33,7 @@ export function TicketTable({ tickets, compact = false }: { tickets: Ticket[]; c
               <tr key={ticket.id} className="border-t border-[var(--app-border-soft)] hover:bg-[var(--app-muted)]">
                 <td className="border-t border-[var(--app-border-soft)] px-5 py-3">
                   <Link href={`/tickets/${ticket.id}`} className="font-semibold text-[var(--brand-primary)] hover:underline">{ticket.number}</Link>
-                  <p className="text-[12px] text-[var(--brand-secondary)]">{requester?.name}</p>
+                  <p className="text-[12px] text-[var(--brand-secondary)]">{requester?.name ?? ticket.requesterName ?? "Solicitante no disponible"}</p>
                 </td>
                 <td className="border-t border-[var(--app-border-soft)] px-5 py-3">
                   <Link href={`/tickets/${ticket.id}`} className="font-semibold text-[var(--foreground)] hover:text-[var(--brand-primary)]">{title}</Link>
