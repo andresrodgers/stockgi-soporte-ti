@@ -76,7 +76,7 @@ export async function getSession() {
 }
 
 export async function withSessionContext<T>(session: SessionPayload, callback: () => Promise<T>) {
-  return withDbSecurityContext({ userId: session.userId, role: session.role, contractId: session.contractId }, callback);
+  return withDbSecurityContext({ userId: session.userId, role: session.role, contractId: session.contractId, authFlow: "session" }, callback);
 }
 
 export async function setSession(payload: Omit<SessionPayload, "sessionTokenHash">, request?: Request) {
