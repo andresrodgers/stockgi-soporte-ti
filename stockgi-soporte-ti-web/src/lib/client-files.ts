@@ -55,9 +55,6 @@ async function compressImage(file: File) {
 }
 
 export async function prepareTicketUpload(files: File[]): Promise<PreparedTicketUpload> {
-  const attachments: TicketAttachment[] = [];
-  const uploadFiles: File[] = [];
-
   for (const file of files) {
     if (!allowedTypes.includes(file.type)) {
       throw new Error(`Archivo no permitido: ${file.name}`);
@@ -66,44 +63,46 @@ export async function prepareTicketUpload(files: File[]): Promise<PreparedTicket
     if (file.size > maxBytes) {
       throw new Error(`El archivo supera 10 MB: ${file.name}`);
     }
-
-    if (imageTypes.includes(file.type)) {
-      const compressed = await compressImage(file);
-      uploadFiles.push(compressed.file);
-      attachments.push({
-        id: `att-${crypto.randomUUID()}`,
-        name: compressed.name,
-        originalFilename: file.name,
-        mimeType: compressed.mimeType,
-        originalSizeBytes: file.size,
-        storedSizeBytes: compressed.blob.size,
-        compressionStatus: compressed.blob.size < file.size ? "compressed" : "not_applicable",
-        retentionDays: 30,
-      });
-    } else {
-      uploadFiles.push(file);
-      attachments.push({
-        id: `att-${crypto.randomUUID()}`,
-        name: file.name,
-        originalFilename: file.name,
-        mimeType: file.type,
-        originalSizeBytes: file.size,
-        storedSizeBytes: file.size,
-        compressionStatus: "not_applicable",
-        retentionDays: 30,
-      });
-    }
   }
 
-  return { attachments, files: uploadFiles };
+  const prepared = await Promise.all(
+    files.map(async (file) => {
+      if (imageTypes.includes(file.type)) {
+        const compressed = await compressImage(file);
+        return {
+          file: compressed.file,
+          attachment: {
+            id: `att-${crypto.randomUUID()}`,
+            name: compressed.name,
+            originalFilename: file.name,
+            mimeType: compressed.mimeType,
+            originalSizeBytes: file.size,
+            storedSizeBytes: compressed.blob.size,
+            compressionStatus: compressed.blob.size < file.size ? "compressed" as const : "not_applicable" as const,
+            retentionDays: 30,
+          },
+        };
+      }
+
+      return {
+        file,
+        attachment: {
+          id: `att-${crypto.randomUUID()}`,
+          name: file.name,
+          originalFilename: file.name,
+          mimeType: file.type,
+          originalSizeBytes: file.size,
+          storedSizeBytes: file.size,
+          compressionStatus: "not_applicable" as const,
+          retentionDays: 30,
+        },
+      };
+    }),
+  );
+
+  return {
+    attachments: prepared.map((item) => item.attachment),
+    files: prepared.map((item) => item.file),
+  };
 }
 
-export async function prepareTicketAttachments(files: File[]) {
-  return (await prepareTicketUpload(files)).attachments;
-}
-
-export function formatBytes(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}

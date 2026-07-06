@@ -38,6 +38,9 @@ function sameDay(left: Date, right: Date) {
   return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth() && left.getDate() === right.getDate();
 }
 
+const weekdayFormatter = new Intl.DateTimeFormat("es-CO", { weekday: "short" });
+const monthFormatter = new Intl.DateTimeFormat("es-CO", { month: "short" });
+
 function buildTrendPoints(tickets: Ticket[], period: PeriodFilter, now: Date): TrendPoint[] {
   if (period === "week") {
     const start = startOfToday(now);
@@ -46,7 +49,7 @@ function buildTrendPoints(tickets: Ticket[], period: PeriodFilter, now: Date): T
       const date = new Date(start);
       date.setDate(start.getDate() + index);
       return {
-        label: new Intl.DateTimeFormat("es-CO", { weekday: "short" }).format(date),
+        label: weekdayFormatter.format(date),
         value: tickets.filter((ticket) => sameDay(parseTicketDate(ticket.createdAt), date)).length,
       };
     });
@@ -75,7 +78,7 @@ function buildTrendPoints(tickets: Ticket[], period: PeriodFilter, now: Date): T
     const from = new Date(now.getFullYear(), index, 1);
     const to = new Date(now.getFullYear(), index + 1, 0, 23, 59, 59, 999);
     return {
-      label: new Intl.DateTimeFormat("es-CO", { month: "short" }).format(from),
+      label: monthFormatter.format(from),
       value: tickets.filter((ticket) => {
         const createdAt = parseTicketDate(ticket.createdAt);
         return createdAt >= from && createdAt <= to;
@@ -177,8 +180,21 @@ export default function ReportesPage() {
 
   const trendPoints = buildTrendPoints(visibleTickets, period, now);
   const trendMax = Math.max(1, ...trendPoints.map((item) => item.value));
-  const statusCounts = uniqueStatuses().map((item) => ({ status: item, count: visibleTickets.filter((ticket) => ticket.status === item).length })).filter((item) => item.count > 0);
-  const priorityCounts = uniquePriorities().map((item) => ({ priority: item, count: visibleTickets.filter((ticket) => ticket.priority === item).length })).filter((item) => item.count > 0);
+
+  const statusTicketCounts = visibleTickets.reduce<Partial<Record<TicketStatus, number>>>((acc, ticket) => {
+    acc[ticket.status] = (acc[ticket.status] ?? 0) + 1;
+    return acc;
+  }, {});
+  const priorityTicketCounts = visibleTickets.reduce<Partial<Record<Priority, number>>>((acc, ticket) => {
+    acc[ticket.priority] = (acc[ticket.priority] ?? 0) + 1;
+    return acc;
+  }, {});
+  const statusCounts = uniqueStatuses()
+    .filter((item) => (statusTicketCounts[item] ?? 0) > 0)
+    .map((item) => ({ status: item, count: statusTicketCounts[item] as number }));
+  const priorityCounts = uniquePriorities()
+    .filter((item) => (priorityTicketCounts[item] ?? 0) > 0)
+    .map((item) => ({ priority: item, count: priorityTicketCounts[item] as number }));
 
   const contractRows = contracts
     .map((contract) => ({
@@ -201,10 +217,14 @@ export default function ReportesPage() {
     .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
     .slice(0, topLimit);
 
+  const categoryTicketCounts = visibleTickets.reduce<Record<string, number>>((acc, ticket) => {
+    acc[ticket.categoryId] = (acc[ticket.categoryId] ?? 0) + 1;
+    return acc;
+  }, {});
   const categoryRows = categories
     .map((category) => ({
       label: category.name,
-      value: visibleTickets.filter((ticket) => ticket.categoryId === category.id).length,
+      value: categoryTicketCounts[category.id] ?? 0,
       detail: "Tickets del rango filtrado",
     }))
     .filter((item) => item.value > 0)

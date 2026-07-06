@@ -143,7 +143,7 @@ export default function CrearTicketPage() {
                 ) : null}
               </Field>
               {formError ? <p className="rounded-[12px] bg-[#fae4df] px-3 py-2 text-[12px] font-semibold text-[#b63c2a]">{formError}</p> : null}
-              <button disabled={submitting} className="h-12 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[14px] font-semibold text-white btn-shadow transition hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-60">{submitting ? t("common.saving") : t("createTicket.submit")}</button>
+              <button type="submit" disabled={submitting} className="h-12 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[14px] font-semibold text-white btn-shadow transition hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-60">{submitting ? t("common.saving") : t("createTicket.submit")}</button>
             </div>
           </Card>
           <Card className="p-5">

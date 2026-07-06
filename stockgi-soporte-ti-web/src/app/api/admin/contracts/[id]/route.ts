@@ -11,10 +11,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     const session = await getSession();
     if (!session) return fail("No autenticado", 401);
     return withSessionContext(session, async () => {
-      await validateCsrfToken(request, session);
-      await assertRole(session.userId, ["ti_administrativo"]);
-      const { id } = await context.params;
-      return ok({ contract: await updateContract(id, await request.json()) });
+      const [, , { id }, body] = await Promise.all([
+        validateCsrfToken(request, session),
+        assertRole(session.userId, ["ti_administrativo"]),
+        context.params,
+        request.json(),
+      ]);
+      return ok({ contract: await updateContract(id, body) });
     });
   } catch (error) {
     return publicError(error, "No fue posible actualizar contrato", 400);

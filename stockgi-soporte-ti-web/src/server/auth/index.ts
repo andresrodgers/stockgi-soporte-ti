@@ -96,7 +96,7 @@ async function clearIpRateLimit(ipKey: string) {
   );
 }
 
-export function safeUser(user: User): User {
+function safeUser(user: User): User {
   return user;
 }
 
@@ -170,27 +170,35 @@ export async function loginByContractDocument(input: LoginRequest, request?: Req
 
   const authUser = rows[0];
   if (!authUser) {
-    await registerFailedIpAttempt(ipKey);
-    await recordSessionEvent(null, "login_failed", ipAddress, userAgent, { reason: "invalid_credentials" });
+    await Promise.all([
+      registerFailedIpAttempt(ipKey),
+      recordSessionEvent(null, "login_failed", ipAddress, userAgent, { reason: "invalid_credentials" }),
+    ]);
     throw new Error(genericLoginError);
   }
 
   if (authUser.locked_until && authUser.locked_until > new Date()) {
-    await registerFailedIpAttempt(ipKey);
-    await recordSessionEvent(authUser.id, "login_blocked", ipAddress, userAgent, { reason: "user_locked" });
+    await Promise.all([
+      registerFailedIpAttempt(ipKey),
+      recordSessionEvent(authUser.id, "login_blocked", ipAddress, userAgent, { reason: "user_locked" }),
+    ]);
     throw new Error(genericLoginError);
   }
 
   const passwordOk = await verifyPassword(input.password, authUser.password_hash);
   if (!passwordOk) {
-    await recordFailedLogin(authUser.id);
-    await registerFailedIpAttempt(ipKey);
-    await recordSessionEvent(authUser.id, "login_failed", ipAddress, userAgent, { reason: "invalid_credentials" });
+    await Promise.all([
+      recordFailedLogin(authUser.id),
+      registerFailedIpAttempt(ipKey),
+      recordSessionEvent(authUser.id, "login_failed", ipAddress, userAgent, { reason: "invalid_credentials" }),
+    ]);
     throw new Error(genericLoginError);
   }
 
-  await queryWithSecurityContext({ authFlow: "login" }, `update app_users set failed_login_attempts = 0, locked_until = null, last_login_at = now() where id = $1`, [authUser.id]);
-  await clearIpRateLimit(ipKey);
+  await Promise.all([
+    queryWithSecurityContext({ authFlow: "login" }, `update app_users set failed_login_attempts = 0, locked_until = null, last_login_at = now() where id = $1`, [authUser.id]),
+    clearIpRateLimit(ipKey),
+  ]);
   const user = await getCurrentUser(authUser.id);
   if (!user) throw new Error(genericLoginError);
   return user;

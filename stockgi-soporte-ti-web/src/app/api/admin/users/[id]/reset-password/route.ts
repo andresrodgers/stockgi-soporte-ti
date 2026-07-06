@@ -11,9 +11,11 @@ export async function POST(request: Request, context: RouteContext) {
     const session = await getSession();
     if (!session) return fail("No autenticado", 401);
     return withSessionContext(session, async () => {
-      await validateCsrfToken(request, session);
-      await assertRole(session.userId, ["ti_administrativo"]);
-      const { id } = await context.params;
+      const [, , { id }] = await Promise.all([
+        validateCsrfToken(request, session),
+        assertRole(session.userId, ["ti_administrativo"]),
+        context.params,
+      ]);
       return ok(await resetUserPasswordByAdmin(session.userId, id));
     });
   } catch (error) {

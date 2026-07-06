@@ -32,7 +32,7 @@ const maxFieldLength = Number(process.env.MAX_CSV_FIELD_LENGTH || 200);
 
 type CsvRow = Record<string, string>;
 
-export function validateCsvFileEnvelope(file: File) {
+function validateCsvFileEnvelope(file: File) {
   if (!file.name.toLowerCase().endsWith(".csv")) throw new Error("Solo se acepta archivo .csv");
   if (file.size > maxCsvBytes) throw new Error("El archivo CSV supera el peso máximo permitido");
 }
@@ -182,8 +182,7 @@ function sanitizeEditableRow(row: BulkImportEditableRow): BulkImportEditableRow 
 
 async function processEditableRows(inputRows: Array<{ rowNumber: number; values: BulkImportEditableRow }>) {
   const rows = inputRows.map((row) => ({ rowNumber: row.rowNumber, values: sanitizeEditableRow(row.values) }));
-  const contracts = await listContracts();
-  const users = await listUsers();
+  const [contracts, users] = await Promise.all([listContracts(), listUsers()]);
   const results: BulkImportRowResult[] = [];
   const seenCedulas = new Set<string>();
   const seenEmails = new Set<string>();

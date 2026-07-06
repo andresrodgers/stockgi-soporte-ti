@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Card, PageHeader, inputClass, selectClass } from "@/components/ui";
 import { useAppState } from "@/context/app-state";
@@ -55,17 +55,99 @@ function shortError(message?: string) {
   return message.split(";")[0]?.trim() || message;
 }
 
+type ImportState = {
+  result: BulkImportResult | null;
+  editingRow: EditableErrorRow | null;
+  draftValues: BulkImportEditableRow;
+  resultFilter: ResultFilter;
+  error: string;
+  modalError: string;
+  loading: boolean;
+  savingRow: boolean;
+};
+
+const initialImportState: ImportState = {
+  result: null,
+  editingRow: null,
+  draftValues: emptyValues(),
+  resultFilter: "all",
+  error: "",
+  modalError: "",
+  loading: false,
+  savingRow: false,
+};
+
+type ImportAction =
+  | { type: "reset_for_new_file" }
+  | { type: "import_start" }
+  | { type: "import_success"; result: BulkImportResult }
+  | { type: "import_error"; message: string }
+  | { type: "open_edit_row"; row: EditableErrorRow }
+  | { type: "close_edit_row" }
+  | { type: "update_draft"; field: keyof BulkImportEditableRow; value: string }
+  | { type: "set_result_filter"; filter: ResultFilter }
+  | { type: "save_row_start" }
+  | { type: "save_row_success_resolved"; result: BulkImportResult; filter: ResultFilter }
+  | { type: "save_row_success_still_error"; result: BulkImportResult; filter: ResultFilter; row: EditableErrorRow; message: string }
+  | { type: "save_row_error"; message: string };
+
+function importReducer(state: ImportState, action: ImportAction): ImportState {
+  switch (action.type) {
+    case "reset_for_new_file":
+      return { ...state, result: null, editingRow: null, resultFilter: "all", error: "" };
+    case "import_start":
+      return { ...state, loading: true, error: "", modalError: "", result: null, editingRow: null, resultFilter: "all" };
+    case "import_success":
+      return { ...state, loading: false, result: action.result };
+    case "import_error":
+      return { ...state, loading: false, error: action.message };
+    case "open_edit_row":
+      return { ...state, editingRow: action.row, draftValues: action.row.values, modalError: "" };
+    case "close_edit_row":
+      return { ...state, editingRow: null, draftValues: emptyValues() };
+    case "update_draft":
+      return { ...state, draftValues: { ...state.draftValues, [action.field]: action.value } };
+    case "set_result_filter":
+      return { ...state, resultFilter: action.filter };
+    case "save_row_start":
+      return { ...state, savingRow: true, modalError: "" };
+    case "save_row_success_resolved":
+      return { ...state, savingRow: false, result: action.result, resultFilter: action.filter, editingRow: null, draftValues: emptyValues() };
+    case "save_row_success_still_error":
+      return { ...state, savingRow: false, result: action.result, resultFilter: action.filter, editingRow: action.row, draftValues: action.row.values, modalError: action.message };
+    case "save_row_error":
+      return { ...state, savingRow: false, modalError: action.message };
+    default:
+      return state;
+  }
+}
+
+function SummaryCard({ filter, label, value, active, onSelect }: { filter: ResultFilter; label: string; value: number; active: boolean; onSelect: (filter: ResultFilter) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(filter)}
+      className={`rounded-[13px] p-3 text-left transition ${active ? "bg-[var(--brand-primary)] text-white" : "bg-[var(--app-muted)] text-[var(--foreground)]"}`}
+    >
+      <p className={`text-[20px] font-semibold ${active ? "text-white" : "text-[var(--foreground)]"}`}>{value}</p>
+      <p className={`text-[12px] ${active ? "text-white/85" : "text-[var(--brand-secondary)]"}`}>{label}</p>
+    </button>
+  );
+}
+
 export default function CargaMasivaPage() {
   const { contracts } = useAppState();
   const [file, setFile] = useState<File | null>(null);
-  const [result, setResult] = useState<BulkImportResult | null>(null);
-  const [editingRow, setEditingRow] = useState<EditableErrorRow | null>(null);
-  const [draftValues, setDraftValues] = useState<BulkImportEditableRow>(emptyValues());
-  const [resultFilter, setResultFilter] = useState<ResultFilter>("all");
-  const [error, setError] = useState("");
-  const [modalError, setModalError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [savingRow, setSavingRow] = useState(false);
+  const [state, dispatch] = useReducer(importReducer, initialImportState);
+  const { result, editingRow, draftValues, resultFilter, error, modalError, loading, savingRow } = state;
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialogEl = dialogRef.current;
+    if (!dialogEl) return;
+    if (editingRow && !dialogEl.open) dialogEl.showModal();
+    if (!editingRow && dialogEl.open) dialogEl.close();
+  }, [editingRow]);
 
   const editableContracts = useMemo(() => contracts.filter((contract) => contract.status === "Activo"), [contracts]);
 
@@ -78,12 +160,7 @@ export default function CargaMasivaPage() {
 
   async function submitImport() {
     if (!file) return;
-    setLoading(true);
-    setError("");
-    setModalError("");
-    setResult(null);
-    setEditingRow(null);
-    setResultFilter("all");
+    dispatch({ type: "import_start" });
 
     try {
       const formData = new FormData();
@@ -91,30 +168,24 @@ export default function CargaMasivaPage() {
       const response = await csrfFetch("/api/admin/import-users", { method: "POST", body: formData });
       const payload = await readApiResponse<{ result: BulkImportResult }>(response);
       if (!response.ok || !payload?.data?.result) throw new Error(payload?.error || "No fue posible validar el archivo");
-      setResult(payload.data.result);
+      dispatch({ type: "import_success", result: payload.data.result });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "No fue posible cargar el archivo");
-    } finally {
-      setLoading(false);
+      dispatch({ type: "import_error", message: caught instanceof Error ? caught.message : "No fue posible cargar el archivo" });
     }
   }
 
   function openEditRow(row: BulkImportRowResult) {
     if (row.status !== "error") return;
-    const editableRow = row as EditableErrorRow;
-    setEditingRow(editableRow);
-    setDraftValues(editableRow.values);
-    setModalError("");
+    dispatch({ type: "open_edit_row", row: row as EditableErrorRow });
   }
 
   function updateDraft(field: keyof BulkImportEditableRow, value: string) {
-    setDraftValues((current) => ({ ...current, [field]: value }));
+    dispatch({ type: "update_draft", field, value });
   }
 
   async function saveEditedRow() {
     if (!result || !editingRow) return;
-    setSavingRow(true);
-    setModalError("");
+    dispatch({ type: "save_row_start" });
 
     try {
       const response = await csrfFetch("/api/admin/import-users", {
@@ -126,38 +197,18 @@ export default function CargaMasivaPage() {
 
       const retriedRow = payload.data.result.rows[0];
       const merged = mergeImportResults(result, payload.data.result);
-      setResult(merged);
-      setResultFilter(retriedRow?.status === "error" ? "error" : "imported");
+      const filter: ResultFilter = retriedRow?.status === "error" ? "error" : "imported";
 
       if (retriedRow?.status === "error") {
         const nextRow = retriedRow as EditableErrorRow;
-        setEditingRow(nextRow);
-        setDraftValues(nextRow.values);
-        setModalError(nextRow.errorMessage || "La fila todavía tiene errores");
+        dispatch({ type: "save_row_success_still_error", result: merged, filter, row: nextRow, message: nextRow.errorMessage || "La fila todavía tiene errores" });
         return;
       }
 
-      setEditingRow(null);
-      setDraftValues(emptyValues());
+      dispatch({ type: "save_row_success_resolved", result: merged, filter });
     } catch (caught) {
-      setModalError(caught instanceof Error ? caught.message : "No fue posible crear la fila corregida");
-    } finally {
-      setSavingRow(false);
+      dispatch({ type: "save_row_error", message: caught instanceof Error ? caught.message : "No fue posible crear la fila corregida" });
     }
-  }
-
-  function renderSummaryCard(filter: ResultFilter, label: string, value: number) {
-    const active = resultFilter === filter;
-    return (
-      <button
-        type="button"
-        onClick={() => setResultFilter(filter)}
-        className={`rounded-[13px] p-3 text-left transition ${active ? "bg-[var(--brand-primary)] text-white" : "bg-[var(--app-muted)] text-[var(--foreground)]"}`}
-      >
-        <p className={`text-[20px] font-semibold ${active ? "text-white" : "text-[var(--foreground)]"}`}>{value}</p>
-        <p className={`text-[12px] ${active ? "text-white/85" : "text-[var(--brand-secondary)]"}`}>{label}</p>
-      </button>
-    );
   }
 
   return (
@@ -188,18 +239,16 @@ export default function CargaMasivaPage() {
             <h2 className="mt-1 text-[15px] font-semibold">Cargar archivo diligenciado</h2>
             <p className="mt-1 text-[12px] text-[var(--brand-secondary)]">Se acepta CSV separado por coma o punto y coma, basado en la plantilla oficial.</p>
             <input
+              aria-label="Seleccionar archivo CSV"
               className={`${inputClass} mt-5 w-full pt-2`}
               type="file"
               accept=".csv,text/csv"
               onChange={(event) => {
                 setFile(event.target.files?.[0] ?? null);
-                setResult(null);
-                setEditingRow(null);
-                setResultFilter("all");
-                setError("");
+                dispatch({ type: "reset_for_new_file" });
               }}
             />
-            <button onClick={submitImport} disabled={!file || loading} className="mt-4 h-11 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-50">
+            <button type="button" onClick={submitImport} disabled={!file || loading} className="mt-4 h-11 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-50">
               {loading ? "Validando..." : "Validar archivo"}
             </button>
             {error ? <p className="mt-3 rounded-[13px] bg-[#fae4df] p-3 text-[13px] font-semibold text-[#b63c2a]">{error}</p> : null}
@@ -209,9 +258,9 @@ export default function CargaMasivaPage() {
             <Card className="p-5">
               <h2 className="text-[15px] font-semibold">Resultado de carga</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                {renderSummaryCard("all", "Filas", result.totalRows)}
-                {renderSummaryCard("imported", "Creados", result.createdUsers)}
-                {renderSummaryCard("error", "Errores", result.errorRows)}
+                <SummaryCard filter="all" label="Filas" value={result.totalRows} active={resultFilter === "all"} onSelect={(filter) => dispatch({ type: "set_result_filter", filter })} />
+                <SummaryCard filter="imported" label="Creados" value={result.createdUsers} active={resultFilter === "imported"} onSelect={(filter) => dispatch({ type: "set_result_filter", filter })} />
+                <SummaryCard filter="error" label="Errores" value={result.errorRows} active={resultFilter === "error"} onSelect={(filter) => dispatch({ type: "set_result_filter", filter })} />
               </div>
               <div className="mt-4 overflow-hidden rounded-[14px] border border-[var(--app-border-soft)]">
                 <table className="w-full table-fixed text-left text-[12px]">
@@ -236,7 +285,7 @@ export default function CargaMasivaPage() {
                         <td className="border-t border-[var(--app-border-soft)] px-3 py-2">{row.status === "error" ? "Error" : "Creado"}</td>
                         <td className="truncate border-t border-[var(--app-border-soft)] px-3 py-2 text-[#b63c2a]" title={row.errorMessage}>{row.status === "error" ? shortError(row.errorMessage) : "-"}</td>
                         <td className="border-t border-[var(--app-border-soft)] px-3 py-2">
-                          {row.status === "error" ? <button onClick={() => openEditRow(row)} className="h-8 rounded-[10px] bg-[var(--app-muted)] px-3 text-[12px] font-semibold text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)]">Editar</button> : <span className="text-[12px] text-[var(--brand-secondary)]">-</span>}
+                          {row.status === "error" ? <button type="button" onClick={() => openEditRow(row)} className="h-8 rounded-[10px] bg-[var(--app-muted)] px-3 text-[12px] font-semibold text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)]">Editar</button> : <span className="text-[12px] text-[var(--brand-secondary)]">-</span>}
                         </td>
                       </tr>
                     ))}
@@ -254,15 +303,19 @@ export default function CargaMasivaPage() {
       </div>
 
       {editingRow ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/20 px-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="edit-import-row-title">
-          <div className="max-h-[92vh] w-full max-w-[760px] overflow-y-auto rounded-[20px] bg-white card-shadow">
+        <dialog
+          ref={dialogRef}
+          onClose={() => dispatch({ type: "close_edit_row" })}
+          aria-labelledby="edit-import-row-title"
+          className="fixed inset-0 m-auto max-h-[92vh] w-full max-w-[760px] overflow-y-auto rounded-[20px] bg-white p-0 card-shadow backdrop:bg-black/20 backdrop:backdrop-blur-[2px]"
+        >
             <div className="flex items-start justify-between gap-4 border-b border-[var(--app-border-soft)] px-6 py-5">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--brand-secondary)]">Fila {editingRow.rowNumber}</p>
                 <h2 id="edit-import-row-title" className="mt-1 text-[20px] font-semibold">Corregir usuario</h2>
                 <p className="mt-1 text-[13px] font-semibold text-[#b63c2a]">{shortError(editingRow.errorMessage)}</p>
               </div>
-              <button onClick={() => setEditingRow(null)} className="grid size-9 place-items-center rounded-[11px] bg-[var(--app-muted)] text-[18px] font-semibold text-[var(--brand-secondary)] hover:bg-[var(--brand-primary-soft)]">x</button>
+              <button type="button" aria-label="Cerrar" onClick={() => dispatch({ type: "close_edit_row" })} className="grid size-9 place-items-center rounded-[11px] bg-[var(--app-muted)] text-[18px] font-semibold text-[var(--brand-secondary)] hover:bg-[var(--brand-primary-soft)]">x</button>
             </div>
 
             <div className="grid gap-4 px-6 py-5">
@@ -309,12 +362,11 @@ export default function CargaMasivaPage() {
               {modalError ? <p className="rounded-[13px] bg-[#fae4df] p-3 text-[13px] font-semibold text-[#b63c2a]">{modalError}</p> : null}
 
               <div className="flex flex-col-reverse gap-2 border-t border-[var(--app-border-soft)] pt-4 sm:flex-row sm:justify-end">
-                <button type="button" onClick={() => setEditingRow(null)} className="h-11 rounded-[14px] bg-white px-5 text-[13px] font-semibold text-[var(--brand-primary)] shadow-sm ring-1 ring-[var(--app-border)]">Cancelar</button>
-                <button onClick={saveEditedRow} disabled={savingRow} className="h-11 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-50">{savingRow ? "Creando..." : "Guardar y crear usuario"}</button>
+                <button type="button" onClick={() => dispatch({ type: "close_edit_row" })} className="h-11 rounded-[14px] bg-white px-5 text-[13px] font-semibold text-[var(--brand-primary)] shadow-sm ring-1 ring-[var(--app-border)]">Cancelar</button>
+                <button type="button" onClick={saveEditedRow} disabled={savingRow} className="h-11 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-50">{savingRow ? "Creando..." : "Guardar y crear usuario"}</button>
               </div>
             </div>
-          </div>
-        </div>
+        </dialog>
       ) : null}
     </AppShell>
   );

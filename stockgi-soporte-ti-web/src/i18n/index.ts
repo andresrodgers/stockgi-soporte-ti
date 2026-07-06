@@ -47,11 +47,13 @@ export function formatAttachmentRule(rule: "No obligatorio" | "Recomendado") {
   return esCO.attachmentRule[rule];
 }
 
+const dateTimeFormatter = new Intl.DateTimeFormat(defaultLocale, { dateStyle: "medium", timeStyle: "short" });
+
 export function formatDateTime(value?: string) {
   if (!value) return "";
   const date = new Date(value.includes("T") ? value : value.replace(" ", "T"));
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat(defaultLocale, { dateStyle: "medium", timeStyle: "short" }).format(date);
+  return dateTimeFormatter.format(date);
 }
 
 export function formatFileSize(bytes: number) {

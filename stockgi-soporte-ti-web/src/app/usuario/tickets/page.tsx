@@ -53,6 +53,7 @@ export default function MisTicketsPage() {
             {filterOptions.map((item) => (
               <button
                 key={item}
+                type="button"
                 onClick={() => {
                   setFilter(item);
                   setPage(1);

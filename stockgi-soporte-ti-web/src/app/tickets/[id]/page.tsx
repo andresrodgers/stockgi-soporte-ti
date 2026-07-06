@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Badge, Card, PageHeader, priorityTone, statusTone, textareaClass } from "@/components/ui";
 import { useAppState } from "@/context/app-state";
@@ -29,6 +29,14 @@ export default function TicketDetailPage() {
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const previewObjectUrlRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const previewDialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialogEl = previewDialogRef.current;
+    if (!dialogEl) return;
+    if (preview && !dialogEl.open) dialogEl.showModal();
+    if (!preview && dialogEl.open) dialogEl.close();
+  }, [preview]);
 
   function releasePreviewUrl() {
     if (previewObjectUrlRef.current) {
@@ -216,7 +224,7 @@ export default function TicketDetailPage() {
                 ))}
               </div>
               <div className="mt-4 grid gap-3">
-                <textarea className={textareaClass} value={comment} onChange={(event) => setComment(event.target.value)} placeholder={isUser ? t("tickets.commentUserPlaceholder") : t("tickets.commentTiPlaceholder")} />
+                <textarea aria-label={t("tickets.history")} className={textareaClass} value={comment} onChange={(event) => setComment(event.target.value)} placeholder={isUser ? t("tickets.commentUserPlaceholder") : t("tickets.commentTiPlaceholder")} />
                 <div className="grid gap-2 rounded-[13px] border border-[var(--app-border-soft)] bg-white p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-[12px] font-semibold text-[var(--foreground)]">Adjuntar archivos a esta respuesta</p>
@@ -243,11 +251,11 @@ export default function TicketDetailPage() {
                   {attachmentsError ? <p className="text-[12px] text-[#b63c2a]">{attachmentsError}</p> : null}
                 </div>
                 {isUser ? (
-                  <button onClick={submitComment} disabled={submitting || (!comment.trim() && !queuedFiles.length)} className="h-11 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-45">{submitting ? t("common.saving") : t("tickets.addComment")}</button>
+                  <button type="button" onClick={submitComment} disabled={submitting || (!comment.trim() && !queuedFiles.length)} className="h-11 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-45">{submitting ? t("common.saving") : t("tickets.addComment")}</button>
                 ) : (
                   <div className="grid gap-2 sm:grid-cols-2">
-                    <button onClick={requestInfo} disabled={submitting || !canActOnTicket || !comment.trim()} className="h-11 rounded-[14px] bg-[var(--app-muted)] px-4 text-[12px] font-semibold text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] disabled:cursor-not-allowed disabled:opacity-45">{submitting ? t("common.saving") : t("tickets.requestInfo")}</button>
-                    <button onClick={closeTicket} disabled={submitting || !canActOnTicket || !comment.trim()} className="h-11 rounded-[14px] bg-[var(--brand-primary)] px-4 text-[12px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-45">{submitting ? t("common.saving") : t("tickets.closeTicket")}</button>
+                    <button type="button" onClick={requestInfo} disabled={submitting || !canActOnTicket || !comment.trim()} className="h-11 rounded-[14px] bg-[var(--app-muted)] px-4 text-[12px] font-semibold text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] disabled:cursor-not-allowed disabled:opacity-45">{submitting ? t("common.saving") : t("tickets.requestInfo")}</button>
+                    <button type="button" onClick={closeTicket} disabled={submitting || !canActOnTicket || !comment.trim()} className="h-11 rounded-[14px] bg-[var(--brand-primary)] px-4 text-[12px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-45">{submitting ? t("common.saving") : t("tickets.closeTicket")}</button>
                   </div>
                 )}
                 {isTi ? <p className="text-[12px] text-[var(--brand-secondary)]">{t("tickets.tiCommentHelp")}</p> : null}
@@ -264,7 +272,7 @@ export default function TicketDetailPage() {
                 <div><dt className="text-[var(--brand-secondary)]">{t("tickets.priority")}</dt><dd><Badge tone={priorityTone(activeTicket.priority)}>{formatPriority(activeTicket.priority)}</Badge></dd></div>
                 <div><dt className="text-[var(--brand-secondary)]">{t("tickets.slaDue")}</dt><dd className="font-semibold">{activeTicket.dueAt}</dd></div>
               </dl>
-              {canTakeTicket ? <button onClick={takeTicket} className="mt-4 h-11 w-full rounded-[14px] bg-[var(--brand-primary)] text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)]">{t("tickets.take")}</button> : null}
+              {canTakeTicket ? <button type="button" onClick={takeTicket} className="mt-4 h-11 w-full rounded-[14px] bg-[var(--brand-primary)] text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)]">{t("tickets.take")}</button> : null}
               {activeTicket.assigneeId ? <p className="mt-4 rounded-[13px] bg-[var(--brand-primary-soft)] p-3 text-[12px] font-semibold text-[var(--brand-primary)]">{t("tickets.alreadyAssigned", { name: assigneeName })}</p> : null}
             </Card>
           </aside>
@@ -272,8 +280,12 @@ export default function TicketDetailPage() {
       </div>
 
       {preview ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 px-4 py-6" role="dialog" aria-modal="true">
-          <div className="max-h-full w-full max-w-4xl overflow-hidden rounded-[14px] bg-white shadow-2xl">
+        <dialog
+          ref={previewDialogRef}
+          onClose={closePreview}
+          aria-label={preview.name}
+          className="fixed inset-0 m-auto max-h-full w-full max-w-4xl overflow-hidden rounded-[14px] bg-white p-0 shadow-2xl backdrop:bg-black/60"
+        >
             <div className="flex items-center justify-between gap-3 border-b border-[var(--app-border-soft)] px-4 py-3">
               <p className="truncate text-[13px] font-semibold">{preview.name}</p>
               <button type="button" onClick={closePreview} className="h-8 rounded-[10px] px-3 text-[12px] font-semibold text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)]">Cerrar</button>
@@ -283,8 +295,7 @@ export default function TicketDetailPage() {
               {!preview.loading && preview.error ? <p className="max-w-lg text-center text-[13px] text-[var(--brand-secondary)]">{preview.error}</p> : null}
               {!preview.loading && !preview.error && preview.url ? <Image src={preview.url} alt={preview.name} width={1600} height={1200} unoptimized className="max-h-[72vh] max-w-full rounded-[8px] object-contain" /> : null}
             </div>
-          </div>
-        </div>
+        </dialog>
       ) : null}
     </AppShell>
   );

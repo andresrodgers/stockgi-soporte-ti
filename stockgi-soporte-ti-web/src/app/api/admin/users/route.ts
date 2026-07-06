@@ -26,9 +26,12 @@ export async function POST(request: Request) {
     const session = await getSession();
     if (!session) return fail("No autenticado", 401);
     return withSessionContext(session, async () => {
-      await validateCsrfToken(request, session);
-      await assertRole(session.userId, ["ti_administrativo"]);
-      const created = await createUser(await request.json());
+      const [, , body] = await Promise.all([
+        validateCsrfToken(request, session),
+        assertRole(session.userId, ["ti_administrativo"]),
+        request.json(),
+      ]);
+      const created = await createUser(body);
       return ok(created, { status: 201 });
     });
   } catch (error) {

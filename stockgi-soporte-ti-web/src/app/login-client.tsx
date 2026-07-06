@@ -205,7 +205,7 @@ export function LoginClient() {
               <PasswordField label={t("auth.newPassword")} value={newPassword} onChange={setNewPassword} autoComplete="new-password" />
               <PasswordField label={t("auth.repeatPassword")} value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" />
               {error ? <p className="rounded-[12px] bg-red-50 px-3 py-2 text-[12px] font-semibold text-red-700">{error}</p> : null}
-              <button disabled={loading} className="mt-2 h-12 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[14px] font-semibold text-white btn-shadow transition hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-70">
+              <button type="submit" disabled={loading} className="mt-2 h-12 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[14px] font-semibold text-white btn-shadow transition hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-70">
                 {loading ? t("common.saving") : t("auth.savePassword")}
               </button>
             </form>
@@ -224,7 +224,7 @@ export function LoginClient() {
               </Field>
               <PasswordField label={t("auth.password")} value={password} onChange={setPassword} autoComplete="current-password" />
               {error ? <p className="rounded-[12px] bg-red-50 px-3 py-2 text-[12px] font-semibold text-red-700">{error}</p> : null}
-              <button disabled={loading} className="mt-2 h-12 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[14px] font-semibold text-white btn-shadow transition hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-70">
+              <button type="submit" disabled={loading} className="mt-2 h-12 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[14px] font-semibold text-white btn-shadow transition hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-70">
                 {loading ? t("common.entering") : t("auth.submit")}
               </button>
             </form>

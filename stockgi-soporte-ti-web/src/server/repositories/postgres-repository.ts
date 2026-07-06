@@ -145,8 +145,7 @@ async function ticketFromDb(row: DbTicket, comments?: TicketComment[], attachmen
 
 async function mapTickets(rows: DbTicket[]) {
   const ids = rows.map((row) => row.id);
-  const comments = await listComments(ids);
-  const attachments = await listAttachments(ids);
+  const [comments, attachments] = await Promise.all([listComments(ids), listAttachments(ids)]);
   return Promise.all(rows.map((row) => ticketFromDb(row, comments.get(row.id) || [], attachments.get(row.id) || [])));
 }
 
@@ -193,8 +192,7 @@ function buildTicketWhere(options: TicketPageOptions) {
 async function getTicket(ticketId: string) {
   const { rows } = await query<DbTicket>(`${ticketSelectSql} where t.id = $1`, [ticketId]);
   if (!rows[0]) throw new Error("Ticket no encontrado");
-  const comments = await listComments([ticketId]);
-  const attachments = await listAttachments([ticketId]);
+  const [comments, attachments] = await Promise.all([listComments([ticketId]), listAttachments([ticketId])]);
   return ticketFromDb(rows[0], comments.get(ticketId) || [], attachments.get(ticketId) || []);
 }
 
@@ -294,20 +292,21 @@ export const postgresRepository: DataRepository = {
     if (!result.rowCount) throw new Error("Usuario no encontrado");
   },
   async listCategories() {
-    const categories = await query<DbCategory>(`select id, name, description from ticket_categories where status='active' order by sort_order asc, name asc`);
-    const requestTypes = await query<DbRequestType>(`select * from ticket_request_types where status='active' order by sort_order asc, name asc`);
+    const [categories, requestTypes] = await Promise.all([
+      query<DbCategory>(`select id, name, description from ticket_categories where status='active' order by sort_order asc, name asc`),
+      query<DbRequestType>(`select * from ticket_request_types where status='active' order by sort_order asc, name asc`),
+    ]);
     const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
     return categories.rows.map<TicketCategory>((category) => {
       const seen = new Set<string>();
-      const deduped = requestTypes.rows
-        .filter((item) => item.category_id === category.id)
-        .filter((item) => {
-          const key = normalize(item.name);
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
+      const deduped = requestTypes.rows.filter((item) => {
+        if (item.category_id !== category.id) return false;
+        const key = normalize(item.name);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
 
       return {
         id: category.id,

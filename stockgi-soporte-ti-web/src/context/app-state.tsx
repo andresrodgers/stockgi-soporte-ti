@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api-client";
-import type { Contract, CreateUserInput, CreatedUserResult, Role, Ticket, TicketAttachment, TicketCategory, TicketStatus, User } from "@/lib/types";
+import type { Contract, CreateUserInput, CreatedUserResult, Role, Ticket, TicketAttachment, TicketCategory, User } from "@/lib/types";
 
 type CreateTicketInput = {
   categoryId: string;
@@ -199,14 +199,3 @@ export function useAppState() {
   }
   return context;
 }
-
-export const statusOptions: TicketStatus[] = [
-  "Nuevo",
-  "Asignado",
-  "En proceso",
-  "Esperando informacion",
-  "Resuelto",
-  "Cerrado",
-  "Reabierto",
-  "Cancelado",
-];

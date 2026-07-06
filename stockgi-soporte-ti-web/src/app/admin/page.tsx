@@ -76,9 +76,13 @@ function countResolvedSince(tickets: Ticket[], userId: string, from: Date) {
 }
 
 function countByStatus(tickets: Ticket[]): StatusCount[] {
+  const counts = tickets.reduce<Partial<Record<TicketStatus, number>>>((acc, ticket) => {
+    acc[ticket.status] = (acc[ticket.status] ?? 0) + 1;
+    return acc;
+  }, {});
   return statusOrder
-    .map((status) => ({ status, count: tickets.filter((ticket) => ticket.status === status).length }))
-    .filter((item) => item.count > 0);
+    .filter((status) => (counts[status] ?? 0) > 0)
+    .map((status) => ({ status, count: counts[status] as number }));
 }
 
 function buildPagination(page: number, pageSize: number, totalItems: number): PaginationMeta {

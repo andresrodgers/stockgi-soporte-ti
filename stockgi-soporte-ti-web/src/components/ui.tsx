@@ -31,34 +31,35 @@ export function PageHeader({
   );
 }
 
+const buttonLinkVariants = {
+  primary: "bg-[var(--brand-primary)] text-white btn-shadow hover:bg-[var(--brand-primary-dark)]",
+  secondary: "bg-white text-[var(--brand-primary)] shadow-sm ring-1 ring-[var(--app-border)] hover:bg-[var(--brand-primary-soft)]",
+  ghost: "text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)]",
+};
+
 export function ButtonLink({ href, children, variant = "primary" }: { href: string; children: React.ReactNode; variant?: "primary" | "secondary" | "ghost" }) {
-  const classes = {
-    primary: "bg-[var(--brand-primary)] text-white btn-shadow hover:bg-[var(--brand-primary-dark)]",
-    secondary: "bg-white text-[var(--brand-primary)] shadow-sm ring-1 ring-[var(--app-border)] hover:bg-[var(--brand-primary-soft)]",
-    ghost: "text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)]",
-  };
-  return <Link href={href} className={`inline-flex h-11 items-center justify-center rounded-[14px] px-5 text-[13px] font-semibold transition ${classes[variant]}`}>{children}</Link>;
+  return <Link href={href} className={`inline-flex h-11 items-center justify-center rounded-[14px] px-5 text-[13px] font-semibold transition ${buttonLinkVariants[variant]}`}>{children}</Link>;
 }
 
-export function Badge({ children, tone = "gray" }: { children: React.ReactNode; tone?: "blue" | "amber" | "green" | "red" | "gray" }) {
-  const tones = {
-    blue: "text-[#2468a2]",
-    amber: "text-[#996207]",
-    green: "text-[#08752d]",
-    red: "text-[#b63c2a]",
-    gray: "text-[#69756e]",
-  };
-  const dotTones = {
-    blue: "bg-[#69b0d3]",
-    amber: "bg-[#e0a51a]",
-    green: "bg-[#0b8e36]",
-    red: "bg-[#d2553d]",
-    gray: "bg-[#8a958f]",
-  };
+const badgeTones = {
+  blue: "text-[#2468a2]",
+  amber: "text-[#996207]",
+  green: "text-[#08752d]",
+  red: "text-[#b63c2a]",
+  gray: "text-[#69756e]",
+};
+const badgeDotTones = {
+  blue: "bg-[#69b0d3]",
+  amber: "bg-[#e0a51a]",
+  green: "bg-[#0b8e36]",
+  red: "bg-[#d2553d]",
+  gray: "bg-[#8a958f]",
+};
 
+export function Badge({ children, tone = "gray" }: { children: React.ReactNode; tone?: "blue" | "amber" | "green" | "red" | "gray" }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 text-[12px] font-semibold ${tones[tone]}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${dotTones[tone]}`} aria-hidden="true" />
+    <span className={`inline-flex items-center gap-1.5 text-[12px] font-semibold ${badgeTones[tone]}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${badgeDotTones[tone]}`} aria-hidden="true" />
       <span>{children}</span>
     </span>
   );

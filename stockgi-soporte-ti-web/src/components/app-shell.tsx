@@ -136,7 +136,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="border-t border-white/10 px-5 py-4">
           <p className="text-[13px] font-semibold">{currentUser.name}</p>
           <p className="text-[12px] text-white/62">{formatRole(effectiveRole)}</p>
-          <button onClick={logout} className="mt-2 text-[12px] font-semibold text-white/78 hover:text-white">{t("common.logout")}</button>
+          <button type="button" onClick={logout} className="mt-2 text-[12px] font-semibold text-white/78 hover:text-white">{t("common.logout")}</button>
         </div>
       </aside>
 
@@ -151,7 +151,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-2">
             
-            <button onClick={logout} className="rounded-[10px] px-3 py-2 text-[12px] font-semibold text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] lg:hidden">{t("common.exit")}</button>
+            <button type="button" onClick={logout} className="rounded-[10px] px-3 py-2 text-[12px] font-semibold text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] lg:hidden">{t("common.exit")}</button>
           </div>
         </div>
         <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:hidden">

@@ -22,9 +22,12 @@ export async function POST(request: Request) {
     const session = await getSession();
     if (!session) return fail("No autenticado", 401);
     return withSessionContext(session, async () => {
-      await validateCsrfToken(request, session);
-      await assertRole(session.userId, ["ti_administrativo"]);
-      const contract = await createContract(await request.json());
+      const [, , body] = await Promise.all([
+        validateCsrfToken(request, session),
+        assertRole(session.userId, ["ti_administrativo"]),
+        request.json(),
+      ]);
+      const contract = await createContract(body);
       return ok({ contract }, { status: 201 });
     });
   } catch (error) {

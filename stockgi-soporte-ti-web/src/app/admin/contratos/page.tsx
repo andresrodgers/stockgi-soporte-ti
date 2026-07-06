@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Card, Field, PageHeader, inputClass, selectClass } from "@/components/ui";
 import { useAppState } from "@/context/app-state";
@@ -9,6 +9,14 @@ export default function ContratosPage() {
   const { contracts, users, tickets, createContract, updateContract } = useAppState();
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialogEl = dialogRef.current;
+    if (!dialogEl) return;
+    if (open && !dialogEl.open) dialogEl.showModal();
+    if (!open && dialogEl.open) dialogEl.close();
+  }, [open]);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -32,7 +40,7 @@ export default function ContratosPage() {
           eyebrow="Administración"
           title="Contratos"
           description="Crea contratos y activa o inactiva operaciónes sin borrar historial. Los contratos inactivos no deberian aparecer en login final."
-          action={<button onClick={() => setOpen(true)} className="h-10 rounded-[13px] bg-[var(--brand-primary)] px-4 text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)]">Nuevo contrato</button>}
+          action={<button type="button" onClick={() => setOpen(true)} className="h-10 rounded-[13px] bg-[var(--brand-primary)] px-4 text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)]">Nuevo contrato</button>}
         />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {contracts.map((contract) => {
@@ -53,6 +61,7 @@ export default function ContratosPage() {
                   <p>{ticketCount} tickets</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => { void updateContract(contract.id, { status: inactive ? "Activo" : "Inactivo" }); }}
                   className={`mt-5 h-9 w-full rounded-[12px] px-3 text-[12px] font-semibold ${inactive ? "bg-[var(--brand-primary)] text-white" : "bg-white text-[#b63c2a] shadow-sm ring-1 ring-[#fae4df]"}`}
                 >
@@ -64,39 +73,40 @@ export default function ContratosPage() {
         </div>
       </div>
 
-      {open ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/20 px-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="contract-modal-title">
-          <div className="w-full max-w-[560px] rounded-[20px] bg-white card-shadow">
-            <div className="flex items-start justify-between gap-4 border-b border-[var(--app-border-soft)] px-6 py-5">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--brand-secondary)]">Nuevo contrato</p>
-                <h2 id="contract-modal-title" className="mt-1 text-[20px] font-semibold">Crear contrato</h2>
-                <p className="mt-1 text-[13px] text-[var(--brand-secondary)]">Agrega una operación o cliente para segmentar usuarios y tickets.</p>
-              </div>
-              <button onClick={() => setOpen(false)} className="grid size-9 place-items-center rounded-[11px] bg-[var(--app-muted)] text-[18px] font-semibold text-[var(--brand-secondary)] hover:bg-[var(--brand-primary-soft)]">x</button>
-            </div>
-            <form onSubmit={submit} className="grid gap-4 px-6 py-5">
-              <Field label="Nombre del contrato">
-                <input name="name" className={inputClass} placeholder="Ej. Operación Occidente" required />
-              </Field>
-              <Field label="Cliente o empresa relacionada">
-                <input name="client" className={inputClass} placeholder="Ej. Cliente externo" required />
-              </Field>
-              <Field label="Estado inicial">
-                <select name="status" className={selectClass} defaultValue="Activo" required>
-                  <option>Activo</option>
-                  <option>Inactivo</option>
-                </select>
-              </Field>
-              {saved ? <p className="rounded-[13px] bg-[var(--brand-primary-soft)] p-3 text-[13px] font-semibold text-[var(--brand-primary)]">Contrato guardado correctamente.</p> : null}
-              <div className="flex flex-col-reverse gap-2 border-t border-[var(--app-border-soft)] pt-4 sm:flex-row sm:justify-end">
-                <button type="button" onClick={() => setOpen(false)} className="h-11 rounded-[14px] bg-white px-5 text-[13px] font-semibold text-[var(--brand-primary)] shadow-sm ring-1 ring-[var(--app-border)]">Cancelar</button>
-                <button className="h-11 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)]">Guardar contrato</button>
-              </div>
-            </form>
+      <dialog
+        ref={dialogRef}
+        onClose={() => setOpen(false)}
+        aria-labelledby="contract-modal-title"
+        className="fixed inset-0 m-auto w-full max-w-[560px] rounded-[20px] bg-white p-0 card-shadow backdrop:bg-black/20 backdrop:backdrop-blur-[2px]"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--app-border-soft)] px-6 py-5">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--brand-secondary)]">Nuevo contrato</p>
+            <h2 id="contract-modal-title" className="mt-1 text-[20px] font-semibold">Crear contrato</h2>
+            <p className="mt-1 text-[13px] text-[var(--brand-secondary)]">Agrega una operación o cliente para segmentar usuarios y tickets.</p>
           </div>
+          <button type="button" aria-label="Cerrar" onClick={() => setOpen(false)} className="grid size-9 place-items-center rounded-[11px] bg-[var(--app-muted)] text-[18px] font-semibold text-[var(--brand-secondary)] hover:bg-[var(--brand-primary-soft)]">x</button>
         </div>
-      ) : null}
+        <form onSubmit={submit} className="grid gap-4 px-6 py-5">
+          <Field label="Nombre del contrato">
+            <input name="name" className={inputClass} placeholder="Ej. Operación Occidente" required />
+          </Field>
+          <Field label="Cliente o empresa relacionada">
+            <input name="client" className={inputClass} placeholder="Ej. Cliente externo" required />
+          </Field>
+          <Field label="Estado inicial">
+            <select name="status" className={selectClass} defaultValue="Activo" required>
+              <option>Activo</option>
+              <option>Inactivo</option>
+            </select>
+          </Field>
+          {saved ? <p className="rounded-[13px] bg-[var(--brand-primary-soft)] p-3 text-[13px] font-semibold text-[var(--brand-primary)]">Contrato guardado correctamente.</p> : null}
+          <div className="flex flex-col-reverse gap-2 border-t border-[var(--app-border-soft)] pt-4 sm:flex-row sm:justify-end">
+            <button type="button" onClick={() => setOpen(false)} className="h-11 rounded-[14px] bg-white px-5 text-[13px] font-semibold text-[var(--brand-primary)] shadow-sm ring-1 ring-[var(--app-border)]">Cancelar</button>
+            <button type="submit" className="h-11 rounded-[14px] bg-[var(--brand-primary)] px-5 text-[13px] font-semibold text-white btn-shadow hover:bg-[var(--brand-primary-dark)]">Guardar contrato</button>
+          </div>
+        </form>
+      </dialog>
     </AppShell>
   );
 }
