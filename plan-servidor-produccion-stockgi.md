@@ -1,4 +1,4 @@
-# Plan Servidor Produccion - StockGI Soporte TI
+﻿# Plan Servidor Produccion - StockGI Soporte TI
 
 ## Estado actual del servidor
 
@@ -13,7 +13,7 @@ Sistema operativo: Ubuntu Server 24.04 LTS
 Recursos VM: 4 vCPU / 16 GB RAM / 256 GB disco
 IP publica del servidor: No aplica / Protegido
 Puertos 80 y 443: confirmados hacia la VM
-Llave SSH entregada: llave_definitiva.ppk
+Llave SSH entregada: D:\12. StockGI\PPK\llave_definitiva.ppk
 ```
 
 Esto sirve para administracion tecnica segura por Tailscale + SSH.
@@ -395,4 +395,13 @@ COMPOSE_PROJECT_NAME=stk-soporte docker compose --env-file .env.production exec 
 COMPOSE_PROJECT_NAME=stk-soporte docker compose --env-file .env.production exec app npm run db:seed
 ```
 
-Pendiente: Cloudflare Tunnel requiere token/credenciales reales de la cuenta Cloudflare y DNS de `soporte.stockgi.com`.
+~~Pendiente: Cloudflare Tunnel requiere token/credenciales reales de la cuenta Cloudflare y DNS de `soporte.stockgi.com`.~~
+
+## Estado real (2026-07-06)
+
+El Tunnel ya esta configurado y en produccion: `https://soporte.stockgi.com` responde
+correctamente. El despliegue de `docker compose up -d --build` ya no aplica tal cual arriba
+para actualizaciones normales de codigo: en la practica solo se reconstruye y recrea el
+servicio `app` (`docker compose --env-file .env.production up -d --build app`), sin tocar
+`postgres` ni `cloudflared`, para evitar downtime innecesario de esos servicios. Ver
+`memoria-arquitectura-produccion.md` para el detalle del ultimo despliegue verificado.

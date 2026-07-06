@@ -104,14 +104,29 @@ docker logs --tail=100 stk-soporte_postgres
 
 ## Actualizacion de codigo
 
-Desde `/opt/stockgi-soporte-ti`:
+Desde `/opt/stockgi-soporte-ti/stockgi-soporte-ti-web`:
 
 ```bash
-git pull
+git pull origin main
 npm run validate:encoding
 npm run lint
 npm run build
 ```
+
+Nota real (2026-07-06): `git pull` puede fallar con `Permission denied (publickey)` si el
+remote `origin` apunta a `git@github.com:...` en vez del alias SSH dedicado del servidor. El
+servidor tiene una llave de deploy en `~/.ssh/github_stockgi_soporte` con un `Host github-stockgi`
+en `~/.ssh/config`. Si pasa, corregir una sola vez:
+
+```bash
+git remote set-url origin git@github-stockgi:andresrodgers/stockgi-soporte-ti.git
+```
+
+Nota real (2026-07-06): antes de un `git pull`, revisar si hay cambios sin confirmar en el
+working tree del servidor (`git status`). Si alguna vez alguien aplico un fix copiando
+archivos directo al servidor sin commitear, hacer `git diff` para confirmar si el contenido ya
+esta en el commit remoto antes de decidir entre `git stash` (reversible) o descartar. Nunca
+usar `git checkout -- .` / `git reset --hard` a ciegas sin verificar primero.
 
 Reconstruir solo la app:
 
@@ -254,7 +269,12 @@ Validar seguridad basica:
 - `.env.production` no esta en Git.
 - `SESSION_COOKIE_SECURE=true` en produccion HTTPS.
 - Cloudflare Tunnel publica solo la app.
-- Backups recientes existen.
+- Backups recientes existen (`docker ps` debe mostrar `stk-soporte_backup` como `Up`, no
+  `Exited`; si esta detenido no hay backups nuevos aunque el volumen tenga dumps viejos).
+- Si la migracion agrega RLS a una tabla nueva, confirmar que existan las 4 politicas
+  (select/insert/update/delete): `select polname, polcmd from pg_policies join pg_policy on
+  pg_policies.policyname=pg_policy.polname where tablename='NOMBRE_TABLA';`. Postgres deniega
+  en silencio (0 filas, sin error) el comando que no tenga politica.
 
 ## Diagnostico rapido
 

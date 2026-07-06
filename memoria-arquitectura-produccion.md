@@ -1,4 +1,4 @@
-# Memoria de arquitectura de produccion - StockGI Soporte TI
+﻿# Memoria de arquitectura de produccion - StockGI Soporte TI
 
 ## Estado vigente
 
@@ -17,7 +17,7 @@ Usuario SSH: stockgiadmin
 Puerto SSH: 22
 Recursos VM: 4 vCPU / 16 GB RAM / 256 GB disco
 IP publica: No aplica / Protegido
-Llave entregada: llave_definitiva.ppk
+Llave entregada: D:\12. StockGI\PPK\llave_definitiva.ppk
 ```
 
 ## Decision de publicacion
@@ -202,10 +202,28 @@ Ya existe base tecnica para produccion:
 
 Pendientes reales antes de abrir al publico:
 
-1. Crear `.env.production` real en la VM.
-2. Levantar Docker Compose en la VM.
-3. Ejecutar `npm run db:migrate` y `npm run db:seed` dentro del contenedor o job autorizado.
-4. Cambiar la contrasena temporal del primer admin.
-5. Probar backup y restore en base temporal.
-6. Configurar Cloudflare Tunnel y DNS de `soporte.stockgi.com`.
-7. Ejecutar prueba funcional completa con `DATA_SOURCE="postgres"`.
+1. ~~Crear `.env.production` real en la VM.~~ Hecho.
+2. ~~Levantar Docker Compose en la VM.~~ Hecho.
+3. ~~Ejecutar `npm run db:migrate` y `npm run db:seed` dentro del contenedor o job autorizado.~~ Hecho.
+4. Cambiar la contrasena temporal del primer admin. Pendiente de confirmar con el equipo.
+5. ~~Probar backup y restore en base temporal.~~ Backup automatico corriendo (`stk-soporte_backup`); restore no se ha probado formalmente.
+6. ~~Configurar Cloudflare Tunnel y DNS de `soporte.stockgi.com`.~~ Hecho, en produccion.
+7. ~~Ejecutar prueba funcional completa con `DATA_SOURCE="postgres"`.~~ Hecho.
+
+## Estado real verificado en produccion (2026-07-06)
+
+Producción esta activa y verificada en `stk-webapp-support-01` (100.116.114.36):
+
+- App corriendo en Docker (`stk-soporte_app`), Postgres (`stk-soporte_postgres`) y Cloudflare
+  Tunnel (`stk-soporte_cloudflared`) activos. Sitio publico `https://soporte.stockgi.com`
+  responde 200.
+- Repositorio del servidor sincronizado con `main` (commit `6bf671c` al momento de esta nota):
+  incluye correcciones de react-doctor (paralelizacion de awaits, accesibilidad, modales
+  nativos `<dialog>`, limpieza de dead code) y una migracion (`0007`) que corrige una politica
+  RLS de `DELETE` faltante en `app_users` (el borrado de usuarios estaba roto en produccion
+  hasta esta fecha).
+- Backup automatico (`stk-soporte_backup`) estuvo detenido ~2 semanas (ultimo backup real:
+  18 de junio) y se reinicio el 2026-07-06; genera dump diario en `/backups` dentro del
+  contenedor.
+- Pendiente real: probar un restore completo desde un dump de backup en una base temporal, y
+  confirmar que la contrasena temporal del primer admin ya fue cambiada.

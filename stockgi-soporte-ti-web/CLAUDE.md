@@ -55,7 +55,7 @@ src/
 │   │   ├── asignados/              # tickets asignados al técnico
 │   │   └── espera/                 # tickets en espera de información
 │   ├── admin/                      # portal del administrador TI
-│   │   ├── usuarios/               # gestión de usuarios
+│   │   ├── usuarios/               # gestión de usuarios (tabla + modales en componentes separados: user-table.tsx, user-form-modal.tsx, reset-password-modal.tsx, delete-user-modal.tsx)
 │   │   ├── contratos/              # gestión de contratos
 │   │   ├── catalogo/               # categorías y tipos de solicitud
 │   │   ├── carga-masiva/           # importación de usuarios por CSV
@@ -127,6 +127,13 @@ Ultima corrida validada:
 
 Nota operativa: si se ejecuta `npm run lint` dentro de una imagen Docker vieja puede fallar por no encontrar `eslint.config.*`; validar lint/build en el repo fuente o reconstruir la imagen antes de usarla como referencia.
 
+Corrida 2026-07-06 (correcciones de react-doctor + fix de RLS):
+
+- Limpieza integral de hallazgos de `react-doctor` (health score 57→64/100): awaits paralelizados en backend, `type` explicito en botones, accesibilidad dirigida, dead code eliminado, `CargaMasivaPage` y `UsuariosPage` migrados a `useReducer` con componentes separados, y los 6 modales migrados de `role="dialog"` a `<dialog>` nativo.
+- Probado localmente con Postgres real en Docker (no con `DATA_SOURCE="demo"`, que ya no esta soportado por el codigo): login, crear/editar/resetear/eliminar usuario, carga masiva CSV con fila de error corregida, y los 6 modales con `showModal()`/`close()` nativos.
+- Se encontro y corrigio un bug real: faltaba la politica RLS de `DELETE` en `app_users` (migracion `0005` solo definia select/insert/update), por lo que "Eliminar usuario" fallaba siempre con "Usuario no encontrado". Migracion `0007_add_app_users_delete_policy.sql` la agrega.
+- Desplegado y verificado en produccion el mismo dia (ver `memoria-arquitectura-produccion.md`).
+
 ---
 
 ## Auth
@@ -159,13 +166,14 @@ UPLOAD_ROOT=
 
 ## Decisiones de arquitectura
 
-- **Multi-tenant por contrato.** Cada usuario pertenece a un contrato (`contract_id`). El ticket hereda el contrato del usuario que lo crea. No hay aislamiento RLS en PostgreSQL; el filtrado es a nivel de aplicación en el repositorio.
+- **Multi-tenant por contrato.** Cada usuario pertenece a un contrato (`contract_id`). El ticket hereda el contrato del usuario que lo crea. El filtrado principal es a nivel de aplicación en el repositorio, reforzado con Row Level Security en PostgreSQL (migración `0005_security_csrf_idempotency_rls.sql`) sobre `contracts`, `app_users`, `ticket_categories`, `ticket_request_types` y `tickets`. Las políticas usan funciones `app_is_admin()` / `app_current_user_id()` / `app_current_role()` que leen el contexto de sesión seteado por `query()`/`queryWithSecurityContext()` en `src/server/db/index.ts`. **Al agregar una tabla nueva con RLS, definir las 4 políticas (select/insert/update/delete) explícitamente** — si falta una, Postgres deniega ese comando para todas las filas sin dar error de permisos (pasó con `app_users` y `DELETE`, corregido en la migración `0007`).
 - **Repositorio como capa de abstracción.** `src/server/repositories/types.ts` define la interfaz `DataRepository`. La implementación activa es `postgres-repository.ts`. Si se quisiera agregar otro backend de datos, se implementa esa interfaz.
 - **Sin ORM.** Todas las consultas son SQL parametrizado directo. Los tipos de base de datos son internos al repositorio; la app consume los tipos de `src/lib/types.ts`.
 - **Sin middleware de autenticación Next.js.** La validación de sesión ocurre en cada Server Component/Route Handler vía `requirePageSession()` o `getSession()`. No hay `middleware.ts`.
 - **Estado cliente centralizado.** `AppStateContext` en `src/context/app-state.tsx` mantiene el estado global del cliente con fetching inicial y mutaciones optimistas donde aplica.
 - **Adjuntos en disco local.** No se usa S3 ni almacenamiento externo. Los archivos se guardan en `UPLOAD_ROOT`. En producción esto implica persistencia del volumen (Docker) o migración futura a object storage.
 - **i18n mínima.** Solo `es-CO`. La función `t()` resuelve strings del diccionario; no hay librerías externas de i18n.
+- **Modales con `<dialog>` nativo.** Los 6 modales de la app (contratos, usuarios, carga masiva, vista previa de adjuntos) usan `<dialog>` con `dialogRef.current?.showModal()`/`.close()` en vez de `<div role="dialog">`, para obtener focus-trap y cierre con `Escape` gratis del navegador. Centrado forzado con clases `fixed inset-0 m-auto` porque el preflight de Tailwind v4 resetea `margin` a 0.
 
 ---
 

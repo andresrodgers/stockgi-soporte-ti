@@ -123,6 +123,8 @@ Validar:
 - consultar dashboard
 - administrar usuarios
 - crear o editar usuario
+- **eliminar un usuario de prueba sin historial** (confirmar cedula, verificar que desaparece de la tabla)
+- restablecer contrasena de un usuario
 - administrar contratos
 - cargar CSV
 - consultar reportes
@@ -130,6 +132,7 @@ Validar:
 Esperado:
 
 - el admin puede ver y operar tickets
+- eliminar usuario funciona de punta a punta (requiere que exista la politica RLS de `DELETE` en `app_users`; ver `docs/runbook-produccion-stk-soporte.md`)
 - la carga CSV valida filas y devuelve resumen
 - reportes y filtros cargan sin romper la UI
 
